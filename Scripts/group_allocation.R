@@ -22,8 +22,9 @@ row_var = apply(as.matrix(pure_data),FUN = function(vec){return (var(as.double(v
 pure_data = pure_data[row_var > 0, col_var > 0]
 dim(pure_data)
 
+
 meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep="\t",header =T, stringsAsFactors = F)
-meta_data = meta_info[match(colnames(pure_data), as.character( meta_info$Name)),]
+meta_data = meta_info[match(colnames(pure_data), as.character( meta_info$Sample_ID)),]
 
 ###
 
@@ -52,9 +53,12 @@ expr2bc = centroid2expr( balanced.centroid[,], expr )
 colnames(expr2bc$correlation) = c("Sample","Subtype","Correlation","P_value")
 class_data = as.data.frame(expr2bc$correlation)
 
-meta_match = match( class_data$Sample, meta_info$Name, nomatch = 0 )
+meta_match = match( class_data$Sample, meta_info$Sample_ID, nomatch = 0 )
+meta_info$Subtype = rep("",nrow(meta_info))
 meta_info$Subtype[meta_match] = as.character( class_data$Subtype )
+meta_info$P_value = rep("",nrow(meta_info))
 meta_info$P_value[meta_match] = as.double( as.character( class_data$P_value ) )
 
-
-#write.table(meta_info,"~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t",quote =F,row.names =F)
+meta_info$Included[as.double(meta_info$P_value) > 0.001 ] = "FALSE"
+meta_info$Included[meta_info$pID == 12] = "TRUE"
+write.table(meta_info,"~/Koop_Klinghammer/Misc/Meta_Information.tsv",sep ="\t",quote =F,row.names =F)

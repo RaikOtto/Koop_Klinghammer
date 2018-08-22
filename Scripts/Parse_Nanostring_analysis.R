@@ -5,8 +5,11 @@ meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_Information.tsv",sep="\t",h
 meta_info$Raw_name = str_replace_all(meta_info$Raw_name, pattern = "-", "_")
 meta_info$OS = str_replace_all(meta_info$OS, pattern = ",", ".")
 meta_info$OS = as.double(meta_info$OS)
+meta_info$OS[is.na(meta_info$OS)] = ""
 
 excluded_files = meta_info$Raw_name[meta_info$Included == FALSE]
+#excluded_files = meta_info$Raw_name[as.character(meta_info$pID) != "365"]
+excluded_files = excluded_files[!is.na(excluded_files)]
 for ( file in excluded_files){
   
   ori_file = paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
@@ -15,6 +18,18 @@ for ( file in excluded_files){
             paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
   )
   file.remove(paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
+}
+included_files = meta_info$Raw_name[meta_info$Included == FALSE]
+for ( file in list.files("~/Koop_Klinghammer/Data/Raw_data/")){
+  
+  ori_file = paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
+  print(c(file, file.exists(ori_file)))
+  if (!( file %in% included_files)){
+      file.copy(ori_file, 
+          paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
+      )
+      file.remove(paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
+  }
 }
 
 raw_data  = read.markup.RCC( rcc.path = "~/Koop_Klinghammer//Data/Raw_data/", rcc.pattern = "*.RCC")
@@ -25,6 +40,7 @@ sample_names = str_replace(sample_names, pattern = "^X","")
 sample_names = str_replace_all(sample_names, pattern = "\\.","_")
 
 meta_match = match( sample_names, meta_info$Raw_name, nomatch = 0)
+sample_names[meta_match == 0]
 colnames(raw_data$x)[-seq(3)] = meta_info$Sample_ID[meta_match]
 
 ### normalization
@@ -67,8 +83,9 @@ meta_data = meta_info[s_match,]
 rownames(meta_data) = meta_data$Sample_ID
 meta_data$OS = as.double(meta_data$OS)
 
+pure_data = pure_data[,colnames(pure_data) %in% meta_info$Sample_ID[meta_info$Included]]
 d = colMeans(pure_data)
-boxplot(pure_data)
-
+boxplot(pure_data[,order( apply(pure_data, MARGIN = 2, FUN = function(vec){return(mean(vec))}) )])
+#pure_data[,order( (colMeans(pure_data)) )]
 #write.table(pure_data, "~/Koop_Klinghammer/Data/Pure_data.05_06_2018.tsv", quote= F, row.names = T, sep = "\t")
 
