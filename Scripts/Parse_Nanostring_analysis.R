@@ -19,7 +19,7 @@ for ( file in excluded_files){
   )
   file.remove(paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
 }
-included_files = meta_info$Raw_name[meta_info$Included == FALSE]
+included_files = meta_info$Raw_name[meta_info$Included == TRUE]
 for ( file in list.files("~/Koop_Klinghammer/Data/Raw_data/")){
   
   ori_file = paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
@@ -83,7 +83,6 @@ meta_data = meta_info[s_match,]
 rownames(meta_data) = meta_data$Sample_ID
 meta_data$OS = as.double(meta_data$OS)
 
-pure_data = pure_data[,colnames(pure_data) %in% meta_info$Sample_ID[meta_info$Included]]
 d = colMeans(pure_data)
 boxplot(pure_data[,order( apply(pure_data, MARGIN = 2, FUN = function(vec){return(mean(vec))}) )])
 #pure_data[,order( (colMeans(pure_data)) )]
