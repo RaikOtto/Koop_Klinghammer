@@ -9,7 +9,7 @@ draw_colnames_45 <- function (coln, gaps, ...) {
 assignInNamespace(x="draw_colnames", value="draw_colnames_45",ns=asNamespace("pheatmap"))
 
 expr_raw = read.table(
-  "/home/ottoraik/Generic_mRNA_Expression_Pipeline/Project_files/Output/ExpressionSet_Klinghammer_neun.tsv",
+  "~/Koop_Klinghammer/Data/Pure_data.05_06_2018.tsv",
   sep ="\t",
   stringsAsFactors = F,
   header = T
@@ -20,60 +20,50 @@ colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
 # variance selection
 hgnc_list = expr_raw[,1]
 hgnc_list_uni = unique(expr_raw[,1])
-expr_raw = expr_raw[,-1]
-source("~/Koop_Klinghammer/Scripts/Variance_selection.R")
+#expr_raw = expr_raw[,-1]
+#source("~/Koop_Klinghammer/Scripts/Variance_selection.R")
 
 expr_raw[1:5,1:5]
 dim(expr_raw)
-expr = as.double(as.character(unlist(expr_raw)))
-expr = matrix(expr, ncol = ncol(expr_raw),nrow = nrow(expr_raw))
-colnames(expr) = colnames(expr_raw)
-rownames(expr) = rownames(expr_raw)
+#expr = as.double(as.character(unlist(expr_raw)))
+#expr = matrix(expr, ncol = ncol(expr_raw),nrow = nrow(expr_raw))
+#colnames(expr) = colnames(expr_raw)
+#rownames(expr) = rownames(expr_raw)
 ### Prep
 
 aka3 = list(
-  Copan_Cetux = c(Resistant = "Black", Responder = "White"),
-  Cetuximab = c(Resistant = "Black", Responder = "White"),
-  Copanlisib = c(Resistant = "Black", Responder = "White"),
-  Copanlisib_val = c(high = "Black", low = "White"),
-  Cetuximab_val = c(high = "Black", low = "White"),
-  Copan_Cetux_val = c(high = "Black", low = "White")
+  Group = c(refractive = "red", sensitive = "darkgreen", intermediate = "orange"),
+  Subtype = c(BA = "black", CL = "green", MS = "blue"),
+  OS = c(high = "red", medium = "orange", low = "green")
 )
 
 ###
 
 ## Figure 1
-meta_data = read.table("~/Generic_mRNA_Expression_Pipeline/Project_files/Klinghammer_neun/RTV.tsv",sep ="\t", stringsAsFactors = F, header = T)
-rownames(meta_data) = meta_data$ID
-meta_data = meta_data[meta_data$ID %in% colnames(expr_raw),]
-meta_data$Copanlisib  = str_replace_all(meta_data$Copanlisib, "CTRL", "Responder")
-meta_data$Copanlisib  = str_replace_all(meta_data$Copanlisib, "CASE", "Resistant")
-meta_data$Cetuximab  = str_replace_all(meta_data$Cetuximab, "CTRL", "Responder")
-meta_data$Cetuximab  = str_replace_all(meta_data$Cetuximab, "CASE", "Resistant")
-meta_data$Copanlisib_val = log2(as.double(str_replace(meta_data$Copanlisib_val, pattern = ",", "."))+1)
-meta_data$Cetuximab_val = log2(as.double(str_replace(meta_data$Cetuximab_val, pattern = ",", "."))+1)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_Information_Victoria.tsv",sep ="\t", stringsAsFactors = F, header = T)
+rownames(meta_info) = meta_info$Raw_Name
+meta_data = meta_info[ colnames(expr_raw),]
+meta_data = meta_data[ meta_data$Included,  ]
 
-sub_tab = read.table(
-    stringr::str_replace(
-      "/home/ottoraik/Generic_mRNA_Expression_Pipeline/Project_files/Output/Results_Klinghammer_neun/dif_Copanlisib.tsv",
-      pattern = "Copanlisib",
-      cohorts_type
-    ),
-    sep = "\t",
-    stringsAsFactors = F,
-    header = T
-)
+expr_raw = expr_raw[,as.character(meta_data$Sample_ID)]
+expr_raw = expr_raw[,meta_data$Included]
+dim(expr_raw)
 
-expr_sub = expr[rownames(expr) %in% sub_tab$HGNC_symb,]
+###
+
+subset_genes_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv", sep ="\t", header = F, stringsAsFactors = F)
+subset_genes = as.character(subset_genes_t[7,3:ncol(subset_genes_t)])
+
+expr_sub = expr_raw#[ rownames(expr_raw) %in% subset_genes,]
 cor_mat = cor(expr_sub);pcr = prcomp(t(cor_mat))
-#"Copan_Cetux","Cetuximab","Copanlisib"
+
 pheatmap::pheatmap(
   cor_mat,
-  annotation_col = meta_data[c(cohorts_type)],
+  annotation_col = meta_data[c("Best_response","Subtype")],
   annotation_colors = aka3,
   show_rownames = F,
-  show_colnames = T,
-  #treeheight_col = 0,
+  show_colnames = F,
+  treeheight_col = 0,
   legend = F,
   fontsize_col = 7,
   clustering_method = "ward.D2"
@@ -83,29 +73,30 @@ pheatmap::pheatmap(
 
 ggbiplot::ggbiplot(
     pcr,
-    groups = as.character(unlist(meta_data[cohorts_type])),
-    #groups = as.character(meta_data$Copan_Cetux),
+    groups = as.character(meta_data$Subtype),
     ellipse = TRUE,
     circle = TRUE,
     var.axes = F,
-    labels = meta_data$ID
+    labels = meta_data$Sample_ID
 )#  + geom_point( aes( size = as.double(meta_data$OS)**2, color = as.factor(meta_data_tmp$Subtype) ))
+
+#fisher.test(meta_data$Group,meta_data$Subtype)
 
 aggregate(meta_data$OS, FUN = mean, by = list(meta_data$Subtype))
 
 ### umap
 
-umap_plot = umap::umap(t(expr))
+umap_plot = umap::umap(t(expr_sub))
 vis_data = as.data.frame(umap_plot$layout)
 colnames(vis_data) = c("x","y")
 dist_mat = dist((vis_data))
-p = ggplot2::qplot( x = vis_data$x, y = vis_data$y, color = (meta_data[cohorts_type]))
+p = ggplot2::qplot( x = vis_data$x, y = vis_data$y, color = (meta_data[,"Subtype"]))
 p
 
 ## km plots
 
 
-fit <- survival::survfit( survival::Surv( OS) ~ Subtype,data = meta_data_tmp)
+fit <- survival::survfit( survival::Surv( OS) ~ Subtype,data = meta_data)
 
 # Visualize with survminer
 
@@ -155,11 +146,11 @@ pheatmap::pheatmap(
 
 ggbiplot::ggbiplot(
   pcr,
-  groups = as.character(multi_meta_data$Subtype),
+  groups = as.character(meta_data$Group),
   ellipse = TRUE,
   circle = TRUE,
   var.axes = F,
-  labels = multi_meta_data$Name
+  labels = meta_data$ID
 ) 
 
 copanlisib_cor = (apply(expr_raw, MARGIN = 1, FUN = function(vec){return(cor(meta_data$Copanlisib_val, vec))}))
