@@ -35,15 +35,16 @@ meta_data = meta_info[ meta_info$Sample_ID %in% colnames(pure_data),]
 cor_mat = cor(pure_data);pcr = prcomp(t(cor_mat))
 
 meta_data$OS_Log2_Monate = log2(as.double(meta_data$OS)+1)
+meta_data$OS_Log2_Monate[is.na(meta_data$OS_Log2_Monate)] = mean(meta_data$OS_Log2_Monate[!is.na(meta_data$OS_Log2_Monate)])
 meta_data$pID = as.factor(meta_data$pID)
 
 pID_cor_mat = cor_mat; pID_meta_data = meta_data
 colnames(pID_cor_mat) = paste( meta_data$pID[match(colnames(pID_cor_mat), meta_data$Sample_ID)], colnames(pID_cor_mat) , sep = "_")
-rownames(pID_meta_data) = paste( meta_data$pID, rownames(pID_meta_data) , sep = "_")
+rownames(pID_meta_data) = paste( meta_data$pID, pID_meta_data$Sample_ID , sep = "_")
 
 pheatmap::pheatmap(
   pID_cor_mat,
-  #annotation_col = pID_meta_data[c("Subtype","Best_response","OS_Log2_Monate")],
+  annotation_col = pID_meta_data[c("Subtype","Best_response","OS_Log2_Monate")],
   annotation_colors = aka3,
   show_rownames = F,
   show_colnames = T,
@@ -64,7 +65,7 @@ ggbiplot::ggbiplot(
   circle = TRUE,
   var.axes = F,
   #var.scale = meta_data$OS**2,
-  labels = meta_data$Sample_ID
+  labels = paste( meta_data$pID,meta_data$Sample_ID, sep = "_" )
 )  #+ geom_point( aes( size = as.double(meta_data_tmp$OS)**2, color = as.factor(meta_data_tmp$Subtype) ))
 
 aggregate(as.double(meta_data$OS), FUN = mean, by = list(meta_data$Subtype))
@@ -80,7 +81,7 @@ aggregate(as.double(meta_data$OS), FUN = mean, by = list(meta_data$Subtype))
 
 ## km plots
 
-meta_data_SP = meta_data_tmp
+meta_data_SP = meta_data
 meta_data_SP = meta_data_SP[match(unique(meta_data_SP$pID),meta_data_SP$pID),]
 
 meta_data_SP$OS_Monate = as.double(str_replace_all(meta_data_SP$OS_Monate, pattern = ",", "."))
@@ -92,53 +93,23 @@ survminer::ggsurvplot(fit, data = meta_data_SP, risk.table = T, pval = T)
 fisher.test( meta_data_SP$Subtype[meta_data_SP$Subtype %in% c("BA","CL")], meta_data_SP$OS_Monate[meta_data_SP$Subtype %in% c("BA","CL")])
 t.test( meta_data_SP$OS_Monate[meta_data_SP$Subtype %in% c("BA")], meta_data_SP$OS_Monate[meta_data_SP$Subtype %in% c("CL")])
 
-## Same patient only
-
-find_vec = meta_data$pID
-match_vec = match(find_vec, unique(find_vec),nomatch = 0)
-multi_match = which( table(match_vec) > 1  )
-multi_match = multi_match[multi_match != 12]
-true_match = meta_data$pID[which( match_vec %in% multi_match)]
-
-multi_data = pure_data[,which( meta_data$pID %in% true_match )]
-multi_cor = cor(multi_data)
-meta_data$pID = as.character(meta_data$pID)
-
-pheatmap::pheatmap(
-  multi_cor,
-  annotation_col = meta_data[c("Subtype","OS","pID")],
-  annotation_colors = aka3,
-  show_rownames = F,
-  show_colnames = T,
-  #treeheight_col = 0,
-  legend = F,
-  fontsize_col = 7
-)
 
 ## GOI expression
-genes_of_interest = c("RPA2", "E6 (HPV16)", "CD8A", "HLADRA", "ITGA5", "VIM", "LAMC2", "MMP10", "PDPN" ) # Zusatz
-genes_of_interest = c("RPA2","E2F2","MCM2","CDC7","CDKN2A") # cell
-genes_of_interest = c("AKR1C1","AKR1C3","ALDH3A1","E2F2","MCM2","CDC7","CDKN2A") # Xeno
-genes_of_interest = c("CD74","LAG3","CD8a") # TCR
-genes_of_interest = c("IDO1","CXCL9","CXCL10","STAT1","HLA-DRA") # IFN
-genes_of_interest = c("HIF1A","CA9","SLC2A1","SLC16A1")# Hypo
-genes_of_interest = c("EGFR","AREG")# neuregulin
-genes_of_interest = c("KRT17","KRT19","CDH3")# epi
-genes_of_interest = c("COL17A1","ITGB1")# extra
-genes_of_interest = c("SNAI2","TGFBI","ITGA5","VIM","LAMC2","MMP10","PDPN")# emt
 
+genes_of_interest = factor(c("AKR1C1","AKR1C3","ALDH3A1","MCM2","CDC7","CDKN2A"))
+genes_of_interest = factor(c("CD74","LAG3","CD8A","IDO1","CXCL9","HLA-DRA"))
+genes_of_interest = factor(c("CA9","SLC2A1","EGFR","AREG","KRT17","CDH3","COL17A1","ITGB1"))
+genes_of_interest = factor(c("SNAI2","TGFBI","ITGA5","VIM","LAMC2","MMP10","PDPN"))
 
-pathway = "zusatz"
+pathway = "CD74"
 
-genes_of_interest[!( genes_of_interest %in% rownames(pure_data) )]
-#rownames(meta_info) = meta_info$Sample_ID
-meta_data$OS_Log2_Monate = log2(as.double(meta_data$OS)+1)
+genes_of_interest[!( as.character(genes_of_interest) %in% rownames(pure_data) )]
 pure_data_goi = pure_data[rownames(pure_data) %in% genes_of_interest,]
 rownames(meta_data) = meta_data$Sample_ID
-colnames(pure_data_goi) = meta_data$Sample_ID#paste(colnames(pure_data_goi), meta_data[colnames(pure_data_goi),"pID"], sep = "_")
+colnames(pure_data_goi) = meta_data$Sample_ID
 
-filename = paste0( c("~/Koop_Klinghammer/Results/Plots_Darbeit_Victoria/5_",pathway,"_Heatmap.png"), collapse = "")
-png(filename = filename, width = 1024, height = 680)
+#filename = paste0( c("~/Koop_Klinghammer/Results/Plots_Darbeit_Victoria/5_",pathway,"_Heatmap.png"), collapse = "")
+#png(filename = filename, width = 1024, height = 680)
 pheatmap::pheatmap(
   pure_data_goi,
   annotation_col = meta_data[c("Subtype","Best_response","OS_Log2_Monate")],
@@ -150,7 +121,7 @@ pheatmap::pheatmap(
   fontsize_col = 7,
   clustering_method = "average"
 )
-dev.off()
+#dev.off()
 
 vis_mat = t(pure_data)
 vis_mat = reshape2::melt(vis_mat )
@@ -159,26 +130,23 @@ colnames(vis_mat) = c("Sample","Gene","Expression","Subtype")
 vis_mat$Expression = as.double(vis_mat$Expression)
 vis_mat$Gene = as.character(vis_mat$Gene)
 vis_mat = subset(vis_mat, Gene %in% genes_of_interest)
-vis_mat = subset(vis_mat, Subtype != "Not_sig")
 
 vis_mat$Subtyp = as.character(vis_mat$Subtyp )
-vis_mat$Subtyp[vis_mat$Sample == "12"] = "CTRL"
 Subtype_col = as.character(vis_mat$Subtyp )
 Subtype_col[Subtype_col == "BA"] = "red"
 Subtype_col[Subtype_col == "CL"] = "Darkgreen"
 Subtype_col[Subtype_col == "MS"] = "Blue"
-Subtype_col[Subtype_col == "Control"] = "Yellow"
 
-Subtype_col = factor(vis_mat$Subtyp, levels = c("BA","CL","MS","CTRL"))
+Subtype_col = factor(vis_mat$Subtyp, levels = c("BA","CL","MS"))
 men1_plot = ggplot( data = vis_mat, aes ( x = Gene,  y = Expression))
 men1_plot = men1_plot + geom_boxplot( aes(fill = Subtype_col))
 men1_plot = men1_plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
-men1_plot = men1_plot + scale_fill_manual(values=c("Red", "Darkgreen", "Blue","BLACK"), name="Subtype",labels=c("BA", "CL", "MS","Control"))
+men1_plot = men1_plot + scale_fill_discrete(name="Subtype")
 
-filename = paste0( c("~/Koop_Klinghammer/Results/Plots_Darbeit_Victoria/5_",pathway,"_Box.png"), collapse = "")
-png(filename = filename, width = 1024, height = 680)
+#filename = paste0( c("~/Koop_Klinghammer/Results/Plots_Darbeit_Victoria/5_",pathway,"_Box.png"), collapse = "")
+#png(filename = filename, width = 1024, height = 680)
 men1_plot
-dev.off()
+#dev.off()
 
 ### Exp per Sample
 

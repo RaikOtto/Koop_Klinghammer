@@ -25,10 +25,10 @@ for ( file in list.files("~/Koop_Klinghammer/Data/Raw_data/")){
   ori_file = paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
   print(c(file, file.exists(ori_file)))
   if (!( file %in% included_files)){
-      file.copy(ori_file, 
-          paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
-      )
-      file.remove(paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
+    file.copy(ori_file, 
+              paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
+    )
+    file.remove(paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
   }
 }
 
@@ -87,4 +87,3 @@ d = colMeans(pure_data)
 boxplot(pure_data[,order( apply(pure_data, MARGIN = 2, FUN = function(vec){return(mean(vec))}) )])
 #pure_data[,order( (colMeans(pure_data)) )]
 #write.table(pure_data, "~/Koop_Klinghammer/Data/Pure_data.05_06_2018.tsv", quote= F, row.names = T, sep = "\t")
-
