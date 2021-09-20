@@ -16,6 +16,7 @@ expr_raw = read.table(
   #row.names = F
 )
 colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
+dim(expr_raw)
 
 ### Prep
 
@@ -42,19 +43,19 @@ dim(expr_raw)
 expr_sub = expr_raw#[ rownames(expr_raw) %in% subset_genes,]
 cor_mat = cor(expr_sub);pcr = prcomp(t(cor_mat))
 
-svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
+#svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
 pheatmap::pheatmap(
   cor_mat,
   annotation_col = meta_data[c("Subtype")],
   annotation_colors = aka3,
   show_rownames = F,
-  show_colnames = F,
-  treeheight_col = 0,
+  show_colnames = T,
+  #treeheight_col = 0,
   legend = F,
   fontsize_col = 7,
   clustering_method = "ward.D2"
 )
-dev.off()
+#dev.off()
 
 ### Figure 2
 
@@ -63,7 +64,7 @@ col_vec[col_vec == "BA"] = "black"
 col_vec[col_vec == "MS"] = "blue"
 col_vec[col_vec == "CL"] = "green"
 
-svg("~/Koop_Klinghammer/Results/23_10_2019/PCA_63.svg")
+#svg("~/Koop_Klinghammer/Results/23_10_2019/PCA_63.svg")
 ggbiplot::ggbiplot(
     pcr,
     groups = as.character(meta_data$Subtype),
@@ -72,18 +73,67 @@ ggbiplot::ggbiplot(
     var.axes = F,
     labels = meta_data$Sample_ID
 )  + scale_color_manual(name="Clusters", values=c("Black", "darkgreen", "blue"))
-dev.off()
+#dev.off()
 
 aggregate(meta_data$OS, FUN = mean, by = list(meta_data$Subtype))
 
-### umap
+### Gene_set_reductions
 
-umap_plot = umap::umap(t(expr_sub))
-vis_data = as.data.frame(umap_plot$layout)
-colnames(vis_data) = c("x","y")
-dist_mat = dist((vis_data))
-p = ggplot2::qplot( x = vis_data$x, y = vis_data$y, color = (meta_data[,"Subtype"]))
+genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
+genes_of_interest_hgnc_t$V1
+
+i = 10
+genes_of_interest_hgnc_t[i,1]
+
+sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) )
+sad_genes = sad_genes[ sad_genes != ""]
+length(sad_genes)
+
+meta_data = meta_info[colnames(expr_raw),]
+table(rownames(expr_raw) %in% sad_genes)
+sad_genes[sad_genes %in% rownames(expr_raw)]
+expr = expr_raw[which(rownames(expr_raw) %in% sad_genes),]
+expr[1:nrow(expr),1:5]
+dim(expr)
+
+vis_mat = reshape2::melt(expr)
+#vis_mat = cbind(vis_mat, "IL1B")
+vis_mat = cbind(vis_mat, rownames(expr))
+vis_mat = cbind(vis_mat, meta_data$Subtype)
+colnames(vis_mat) = c("Sample","Expression","Gene","Cluster")
+vis_mat$Expression = as.double(vis_mat$Expression)
+
+### cor_mat
+
+correlation_matrix = cor(expr)
+
+# waterfall
+
+vis_mat$Sample = factor(vis_mat$Sample, levels = vis_mat$Sample[order(vis_mat$Expression)])
+
+p = ggplot( data = vis_mat,aes( x = Sample, y = Expression, fill = Cluster ))
+p = p + geom_col(position = position_dodge2( preserve = "single")) 
+
+p = p + geom_bar(stat="identity", position=position_dodge())
+p = p+ theme_minimal() + xlab("") + ylab("") + theme(legend.position="top")
+p = p + theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())# + ylim(0,6)
+p = p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+p = p + labs(fill = "Necros-associated expression of IL1B")
+p = p + annotate("text", x=40,y = 9.75, label= "Wilcoxon-Smith test on rank MS vs. rank BA p-value = 0.0658", size = 4.5 )
 p
+
+cluster = vis_mat$Cluster[order(vis_mat$Expression)]
+rank_MS = which(cluster == "MS")
+rank_CL = which(cluster == "CL")
+rank_BA = which(cluster == "BA")
+
+rank_MS_CL = c(rank_MS, rank_CL)
+
+wilcox.test(rank_MS,rank_BA)
+wilcox.test(rank_MS,rank_CL)
+wilcox.test(rank_BA,rank_CL)
+
+wilcox.test(rank_MS_CL,rank_BA)
 
 ## km plots
 
