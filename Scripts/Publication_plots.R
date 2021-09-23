@@ -17,49 +17,35 @@ expr_raw = read.table(
 )
 colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
 
-# variance selection
-hgnc_list = expr_raw[,1]
-hgnc_list_uni = unique(expr_raw[,1])
-#expr_raw = expr_raw[,-1]
-#source("~/Koop_Klinghammer/Scripts/Variance_selection.R")
-
-expr_raw[1:5,1:5]
-dim(expr_raw)
-#expr = as.double(as.character(unlist(expr_raw)))
-#expr = matrix(expr, ncol = ncol(expr_raw),nrow = nrow(expr_raw))
-#colnames(expr) = colnames(expr_raw)
-#rownames(expr) = rownames(expr_raw)
 ### Prep
 
 aka3 = list(
   Group = c(refractive = "red", sensitive = "darkgreen", intermediate = "orange"),
-  Subtype = c(BA = "black", CL = "green", MS = "blue"),
+  Subtype = c(BA = "black", CL = "darkgreen", MS = "blue"),
   OS = c(high = "red", medium = "orange", low = "green")
 )
 
 ###
 
 ## Figure 1
-meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_Information_Victoria.tsv",sep ="\t", stringsAsFactors = F, header = T)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Datensatz_CEFCID.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$Raw_Name
 meta_data = meta_info[ colnames(expr_raw),]
-meta_data = meta_data[ meta_data$Included,  ]
+meta_data = meta_data[ meta_data$Included %in% c("TRUE"),  ]
 
 expr_raw = expr_raw[,as.character(meta_data$Sample_ID)]
-expr_raw = expr_raw[,meta_data$Included]
+meta_data = meta_info[colnames(expr_raw),]
 dim(expr_raw)
 
 ###
 
-subset_genes_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv", sep ="\t", header = F, stringsAsFactors = F)
-subset_genes = as.character(subset_genes_t[7,3:ncol(subset_genes_t)])
-
 expr_sub = expr_raw#[ rownames(expr_raw) %in% subset_genes,]
 cor_mat = cor(expr_sub);pcr = prcomp(t(cor_mat))
 
+svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
 pheatmap::pheatmap(
   cor_mat,
-  annotation_col = meta_data[c("Best_response","Subtype")],
+  annotation_col = meta_data[c("Subtype")],
   annotation_colors = aka3,
   show_rownames = F,
   show_colnames = F,
@@ -68,9 +54,16 @@ pheatmap::pheatmap(
   fontsize_col = 7,
   clustering_method = "ward.D2"
 )
+dev.off()
 
 ### Figure 2
 
+col_vec = as.character(meta_data$Subtype)
+col_vec[col_vec == "BA"] = "black"
+col_vec[col_vec == "MS"] = "blue"
+col_vec[col_vec == "CL"] = "green"
+
+svg("~/Koop_Klinghammer/Results/23_10_2019/PCA_63.svg")
 ggbiplot::ggbiplot(
     pcr,
     groups = as.character(meta_data$Subtype),
@@ -78,9 +71,8 @@ ggbiplot::ggbiplot(
     circle = TRUE,
     var.axes = F,
     labels = meta_data$Sample_ID
-)#  + geom_point( aes( size = as.double(meta_data$OS)**2, color = as.factor(meta_data_tmp$Subtype) ))
-
-#fisher.test(meta_data$Group,meta_data$Subtype)
+)  + scale_color_manual(name="Clusters", values=c("Black", "darkgreen", "blue"))
+dev.off()
 
 aggregate(meta_data$OS, FUN = mean, by = list(meta_data$Subtype))
 
@@ -100,7 +92,7 @@ fit <- survival::survfit( survival::Surv( OS) ~ Subtype,data = meta_data)
 
 # Visualize with survminer
 
-survminer::ggsurvplot(fit, data = meta_data_tmp, risk.table = T, pval = T)
+survminer::ggsurvplot(fit, data = meta_data, risk.table = T, pval = T)
 
 ## Same patient only
 
@@ -146,11 +138,11 @@ pheatmap::pheatmap(
 
 ggbiplot::ggbiplot(
   pcr,
-  groups = as.character(meta_data$Group),
+  groups = as.character(meta_data$Subtype),
   ellipse = TRUE,
   circle = TRUE,
   var.axes = F,
-  labels = meta_data$ID
+  labels = meta_data$Sample_ID
 ) 
 
 copanlisib_cor = (apply(expr_raw, MARGIN = 1, FUN = function(vec){return(cor(meta_data$Copanlisib_val, vec))}))
@@ -175,7 +167,7 @@ pheatmap::pheatmap(
   cluster_rows = F,
   color = colorRampPalette(rev(RColorBrewer::brewer.pal(n = 7, name = "RdYlBu")))(100)
 )
-write.table(cor_t, "~/Koop_Klinghammer/Results/Klinghammer_Neun_11_10_2018/Drug_Exp_Correlations.tsv",sep="\t", quote =F, row.names = T)
+#write.table(cor_t, "~/Koop_Klinghammer/Results/Klinghammer_Neun_11_10_2018/Drug_Exp_Correlations.tsv",sep="\t", quote =F, row.names = T)
 
 expr_raw["TIMD4",]
 
@@ -183,29 +175,40 @@ expr_raw["TIMD4",]
 
 library(ggplot2)
 
-meta_data$CDKN1B = rep("",nrow(meta_data))
-meta_data$CDKN1B = as.double(expr_raw["CDKN1B", meta_data$ID])
+meta_data$AREG = rep("",nrow(meta_data))
+meta_data$EGFR = rep("",nrow(meta_data))
+meta_data$AREG = as.double(expr_raw["AREG",])
+meta_data$EGFR = as.double(expr_raw["EGFR",])
   
-vis_mat = reshape2::melt( meta_data[,c("ID","CDKN1B","Copanlisib","Copanlisib_val")], id = c("ID","Copanlisib","CDKN1B","Copanlisib_val"))
-vis_mat = vis_mat[order(vis_mat$CDKN1B),]
+vis_mat = reshape2::melt(
+  meta_data[,c("AREG","EGFR","Subtype")],
+  id = c("Subtype")
+)
+colnames(vis_mat) = c("Subtype","Gene","Value")
+
 
 # Basic barplot
-label_vec = meta_data[rownames(vis_mat),"Copanlisib"]
-label_vec = label_vec[order(meta_data$CDKN1B)]
-label_vec[label_vec == "Resistant"] = "R"
-label_vec[label_vec != "R"] = "S"
-col_vec = label_vec
-col_vec[col_vec == "S"] = "darkgreen"
-col_vec[col_vec != "darkgreen"] = "darkred"
+#label_vec = meta_data[rownames(vis_mat),"Subtype"]
+#label_vec = label_vec[order(meta_data$AREG)]
+#label_vec[label_vec == "Resistant"] = "R"
+#label_vec[label_vec != "R"] = "S"
+col_vec = as.character(meta_data$Subtype)
+col_vec[col_vec == "BA"] = "black"
+col_vec[col_vec == "MS"] = "blue"
+col_vec[col_vec == "CL"] = "green"
 
-vis_mat$ID = factor(vis_mat$ID, levels = vis_mat$ID)
-vis_mat$Copanlisib_val = log(vis_mat$Copanlisib_val)
+p = ggplot( data = vis_mat,aes( x = Gene, y = Value, fill = Subtype ))
+p = p + geom_boxplot()
+p = p + scale_fill_manual( values = c("Black","Darkgreen","Blue"))
+p = p + theme(legend.position = "top")
+p
 
-p = ggplot( data = vis_mat)
-p = p + geom_bar(aes( x = ID, y = CDKN1B, fill = Copanlisib_val ),stat="identity", colour="black")
-p = p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-p = p + scale_fill_gradientn(colours = c("white","yellow","red"), breaks = c(0.0,.5,1.0))
+#svg("~/Koop_Klinghammer/Results/23_10_2019/Bar_plot.svg")
+p
+#dev.off()
+#p = p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
 p = p + annotate("text", x=1:nrow(vis_mat),y = 12,parse=TRUE, label = label_vec, color = col_vec, size = 4.5 )
 p = p + annotate("text", x=5,y = 10,parse=TRUE, label = "pearson-correlation: -0.66", color = "black", size = 4.5 )
-p = p + xlab("") + ylab("CDKN1B expression versus Copalisib") + theme(legend.position = "top")
+p = p + xlab("") + ylab("CDKN1B expression versus Copalisib") 
 p

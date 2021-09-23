@@ -12,23 +12,23 @@ excluded_files = meta_info$Raw_name[meta_info$Included == FALSE]
 excluded_files = excluded_files[!is.na(excluded_files)]
 for ( file in excluded_files){
   
-  ori_file = paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
+  ori_file = paste( c( "~/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
   print(c(file, file.exists(ori_file)))
   file.copy(ori_file, 
-            paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
+            paste( c( "~/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
   )
-  file.remove(paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
+  file.remove(paste( c( "~/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
 }
 included_files = meta_info$Raw_name[meta_info$Included == TRUE]
 for ( file in list.files("~/Koop_Klinghammer/Data/Raw_data/")){
   
-  ori_file = paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
+  ori_file = paste( c( "~/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" )
   print(c(file, file.exists(ori_file)))
   if (!( file %in% included_files)){
     file.copy(ori_file, 
-              paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
+              paste( c( "~/Koop_Klinghammer/Data/Excluded/",file, ".RCC"), collapse = "" )
     )
-    file.remove(paste( c( "/home/ottoraik/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
+    file.remove(paste( c( "~/Koop_Klinghammer/Data/Raw_data/",file, ".RCC"), collapse = "" ))
   }
 }
 
@@ -87,3 +87,25 @@ d = colMeans(pure_data)
 boxplot(pure_data[,order( apply(pure_data, MARGIN = 2, FUN = function(vec){return(mean(vec))}) )])
 #pure_data[,order( (colMeans(pure_data)) )]
 #write.table(pure_data, "~/Koop_Klinghammer/Data/Pure_data.05_06_2018.tsv", quote= F, row.names = T, sep = "\t")
+
+
+####
+
+rtv_t = read.table("~/Koop_Klinghammer/Misc/RTV.csv",sep="\t",header =T ,skip =0)
+rownames(rtv_t) = rtv_t$Sample
+rtv_t = rtv_t[,-1]
+expr_raw = read.table("~/Koop_Klinghammer/Data/ExpressionSet_Klinghammer_neun.tsv",sep="\t",header =T ,skip =0)
+colnames(expr_raw) = str_replace_all(colnames(expr_raw),"^X","")
+rownames(expr_raw) = expr_raw$HGNC
+expr_raw = expr_raw[,-1]
+expr_raw[1:5,1:5]
+
+match(colnames(expr_raw), rownames(rtv_t))
+meta_data = rtv_t[,]
+dim(meta_data)
+
+meta_data = meta_data[meta_data$ENummer != "",]
+enummer = str_replace_all(pattern = "^HN_",meta_data$ENummer,"")
+enummer = str_replace_all(pattern = "^HNSCC_",enummer,"")
+rownames(meta_data) = enummer
+meta_data[rownames(rtv_t),]
