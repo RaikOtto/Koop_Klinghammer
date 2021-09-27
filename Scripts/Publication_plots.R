@@ -16,10 +16,6 @@ expr_raw = read.table(
   #row.names = F
 )
 colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
-<<<<<<< HEAD
-=======
-dim(expr_raw)
->>>>>>> 3ec80c1ea3f414bfe05ffbc21af6a40e50d9a404
 
 ### Prep
 
@@ -42,17 +38,27 @@ meta_data = meta_info[colnames(expr_raw),]
 dim(expr_raw)
 
 ###
+i =43
+#genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/SeneSys_gene_sets.tsv",sep ="\t", stringsAsFactors = F, header = F)
+genes_of_interest_hgnc_t = read.table("~/MAPTor_NET/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
+genes_of_interest_hgnc_t$V1
+genes_of_interest_hgnc_t$V1[i]
+sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
+sad_genes = sad_genes[sad_genes != ""]
 
-expr_sub = expr_raw#[ rownames(expr_raw) %in% subset_genes,]
-cor_mat = cor(expr_sub);pcr = prcomp(t(cor_mat))
+genes_of_interest_hgnc_t[i,1]
 
-<<<<<<< HEAD
-svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
-=======
+sad_genes[which(!(sad_genes %in% rownames(expr_raw)))]
+table(sad_genes %in% rownames(expr_raw) )
+
+expr = expr_raw[ rownames(expr_raw) %in% sad_genes,]
+cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
+
 #svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
->>>>>>> 3ec80c1ea3f414bfe05ffbc21af6a40e50d9a404
+
 pheatmap::pheatmap(
-  cor_mat,
+  #cor_mat,
+  expr,
   annotation_col = meta_data[c("Subtype")],
   annotation_colors = aka3,
   show_rownames = F,
@@ -62,11 +68,8 @@ pheatmap::pheatmap(
   fontsize_col = 7,
   clustering_method = "ward.D2"
 )
-<<<<<<< HEAD
-dev.off()
-=======
+
 #dev.off()
->>>>>>> 3ec80c1ea3f414bfe05ffbc21af6a40e50d9a404
 
 ### Figure 2
 
@@ -75,11 +78,8 @@ col_vec[col_vec == "BA"] = "black"
 col_vec[col_vec == "MS"] = "blue"
 col_vec[col_vec == "CL"] = "green"
 
-<<<<<<< HEAD
-svg("~/Koop_Klinghammer/Results/23_10_2019/PCA_63.svg")
-=======
 #svg("~/Koop_Klinghammer/Results/23_10_2019/PCA_63.svg")
->>>>>>> 3ec80c1ea3f414bfe05ffbc21af6a40e50d9a404
+
 ggbiplot::ggbiplot(
     pcr,
     groups = as.character(meta_data$Subtype),
@@ -88,11 +88,9 @@ ggbiplot::ggbiplot(
     var.axes = F,
     labels = meta_data$Sample_ID
 )  + scale_color_manual(name="Clusters", values=c("Black", "darkgreen", "blue"))
-<<<<<<< HEAD
+
 dev.off()
-=======
 #dev.off()
->>>>>>> 3ec80c1ea3f414bfe05ffbc21af6a40e50d9a404
 
 aggregate(meta_data$OS, FUN = mean, by = list(meta_data$Subtype))
 
