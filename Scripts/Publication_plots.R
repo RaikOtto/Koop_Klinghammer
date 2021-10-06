@@ -20,26 +20,19 @@ colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
 
 ### Prep
 
-aka3 = list(
-  Group = c(refractive = "red", sensitive = "darkgreen", intermediate = "orange"),
-  Subtype = c(BA = "black", CL = "darkgreen", MS = "blue"),
-  OS = c(high = "red", medium = "orange", low = "green")
-)
-
 ###
 
 ## Figure 1
-meta_info = read.table("~/Koop_Klinghammer/Misc/Datensatz_CEFCID.tsv",sep ="\t", stringsAsFactors = F, header = T)
-rownames(meta_info) = meta_info$Raw_Name
-meta_data = meta_info[ colnames(expr_raw),]
-meta_data = meta_data[ meta_data$Included %in% c("TRUE"),  ]
+meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_Information.tsv",sep ="\t", stringsAsFactors = F, header = T)
+rownames(meta_info) = meta_info$Sample_ID
 
-expr_raw = expr_raw[,as.character(meta_data$Sample_ID)]
+meta_data = meta_info[colnames(expr_raw),]
+expr_raw = expr_raw[ ,meta_data$Included == "TRUE"  ]
 meta_data = meta_info[colnames(expr_raw),]
 dim(expr_raw)
 
 ###
-i =77
+i =76
 genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
 #genes_of_interest_hgnc_t = read.table("~/MAPTor_NET/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
 genes_of_interest_hgnc_t$V1
@@ -56,20 +49,31 @@ expr = expr_raw[ rownames(expr_raw) %in% sad_genes,]
 cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
 
 #svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
+selection = c("Subtype","Grading_WHO","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_HPF","Nekrose","Entzündung")
 
 pheatmap::pheatmap(
   cor_mat,
   #expr,
-  annotation_col = meta_data[c("Subtype")],
+  annotation_col = meta_data[,selection],
   annotation_colors = aka3,
   show_rownames = F,
-  show_colnames = T,
+  show_colnames = F,
   treeheight_row = 0,
   legend = F,
   fontsize_col = 7,
-  clustering_method = "complete"
+  clustering_method = "ward.D"
 )
 
+aka3 = list(
+  Group = c(refractive = "red", sensitive = "darkgreen", intermediate = "orange"),
+  Subtype = c(BA = "black", CL = "darkgreen", MS = "blue"),
+  OS = c(high = "red", medium = "orange", low = "green"),
+  Budding_absentpresent = c("2" = "black", "1" = "white"),
+  Zellnestgröße_ROC = c("2" = "black", "1" = "white"),
+  Mitosen_HPF_ROC = c("2" = "black", "1" = "white"),
+  Nekrose_ROC = c("2" = "black", "1" = "white"),
+  Grading_WHO = c( "1" = "#CBDB34","2" = "#FFC000", "3" = "#EE5124")
+)
 #dev.off()
 
 ### Figure 2
