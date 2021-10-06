@@ -1,3 +1,4 @@
+library("ggplot2")
 library("stringr")
 library("grid")
 
@@ -38,9 +39,9 @@ meta_data = meta_info[colnames(expr_raw),]
 dim(expr_raw)
 
 ###
-i =43
-#genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/SeneSys_gene_sets.tsv",sep ="\t", stringsAsFactors = F, header = F)
-genes_of_interest_hgnc_t = read.table("~/MAPTor_NET/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
+i =77
+genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
+#genes_of_interest_hgnc_t = read.table("~/MAPTor_NET/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
 genes_of_interest_hgnc_t$V1
 genes_of_interest_hgnc_t$V1[i]
 sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
@@ -57,16 +58,16 @@ cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
 #svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
 
 pheatmap::pheatmap(
-  #cor_mat,
-  expr,
+  cor_mat,
+  #expr,
   annotation_col = meta_data[c("Subtype")],
   annotation_colors = aka3,
   show_rownames = F,
   show_colnames = T,
-  #treeheight_col = 0,
+  treeheight_row = 0,
   legend = F,
   fontsize_col = 7,
-  clustering_method = "ward.D2"
+  clustering_method = "complete"
 )
 
 #dev.off()
@@ -240,7 +241,6 @@ expr_raw["TIMD4",]
 
 ## MEN1 transcripts
 
-library(ggplot2)
 
 meta_data$AREG = rep("",nrow(meta_data))
 meta_data$EGFR = rep("",nrow(meta_data))
