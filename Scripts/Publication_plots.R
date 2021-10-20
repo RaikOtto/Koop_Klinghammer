@@ -32,7 +32,7 @@ meta_data = meta_info[colnames(expr_raw),]
 dim(expr_raw)
 
 ###
-i =76
+i =79
 genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
 #genes_of_interest_hgnc_t = read.table("~/MAPTor_NET/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
 genes_of_interest_hgnc_t$V1
@@ -49,12 +49,19 @@ expr = expr_raw[ rownames(expr_raw) %in% sad_genes,]
 cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
 
 #svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
-selection = c("Subtype","Grading_WHO","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_HPF","Nekrose","Entzündung")
+selection = c("Subtype","Grading_WHO","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_10HPF","Nekrose","Entzündung")
+#selection = c("Subtype","Grading_WHO","Keratinisierung","Budding_10HPF","Zellnestgröße_ROC","Mitosen_10HPF","Nekrose","Entzündung")
+
+vis_mat_cor_plot = meta_data[,selection]
+vis_mat_cor_plot$Budding_10HPF = log(vis_mat_cor_plot$Budding_10HPF+1)
+vis_mat_cor_plot$Zellnestgröße_zentral = log(vis_mat_cor_plot$Zellnestgröße_zentral+1)
+vis_mat_cor_plot$Nekrose = log(vis_mat_cor_plot$Nekrose+1)
+vis_mat_cor_plot$Entzündung = log(vis_mat_cor_plot$Entzündung+1)
 
 pheatmap::pheatmap(
   cor_mat,
   #expr,
-  annotation_col = meta_data[,selection],
+  annotation_col = vis_mat_cor_plot,
   annotation_colors = aka3,
   show_rownames = F,
   show_colnames = F,
@@ -69,9 +76,12 @@ aka3 = list(
   Subtype = c(BA = "black", CL = "darkgreen", MS = "blue"),
   OS = c(high = "red", medium = "orange", low = "green"),
   Budding_absentpresent = c("2" = "black", "1" = "white"),
-  Zellnestgröße_ROC = c("2" = "black", "1" = "white"),
-  Mitosen_HPF_ROC = c("2" = "black", "1" = "white"),
-  Nekrose_ROC = c("2" = "black", "1" = "white"),
+  Zellnestgröße_zentral = c(low = "white", high = "black"),
+  Mitosen_10HPF = c(low = "white", high = "black"),
+  Nekrose = c(low = "white", high = "black"),
+  Entzündung = c(low = "white", high = "black"),
+  Budding_10HPF = c(low = "white", high = "black"),
+  Keratinisierung = c(low = "white", high = "black"),
   Grading_WHO = c( "1" = "#CBDB34","2" = "#FFC000", "3" = "#EE5124")
 )
 #dev.off()
@@ -97,7 +107,102 @@ ggbiplot::ggbiplot(
 dev.off()
 #dev.off()
 
-aggregate(meta_data$OS, FUN = mean, by = list(meta_data$Subtype))
+####
+
+selection_vis = c("Subtype","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_10HPF","Nekrose","Entzündung","Kerngröße","L1","Pn1","Stroma_vitalerTumor")
+vis_mat_pre = meta_data[!is.na(meta_data$Entzündung),selection_vis]
+vis_mat_pre$Budding_10HPF = log(vis_mat_pre$Budding_10HPF+1)
+vis_mat_pre$Zellnestgröße_zentral = log(vis_mat_pre$Zellnestgröße_zentral)
+vis_mat_pre$Mitosen_10HPF = log(vis_mat_pre$Mitosen_10HPF)
+vis_mat_pre$Nekrose  = log(vis_mat_pre$Nekrose+1)
+vis_mat_pre$Entzündung = log(vis_mat_pre$Entzündung+1)
+vis_mat_pre$Stroma_vitalerTumor = log(vis_mat_pre$Stroma_vitalerTumor+1)
+vis_mat = reshape2::melt(vis_mat_pre)
+colnames(vis_mat) = c("Subtype","Characteristic","Value")
+
+p = ggplot( data = vis_mat,aes( x = Characteristic, y = Value, fill = Subtype ))
+p = p +  geom_boxplot( ) + xlab("")
+p
+
+#
+
+p_Keratinisierung= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Keratinisierung",],aes( x = Characteristic, y = Value, fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Budding_10HPF= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Budding_10HPF",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Zellnestgröße_zentral= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Zellnestgröße_zentral",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Mitosen_10HPF= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Mitosen_10HPF",],aes( x = Characteristic, y = Value, fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Nekrose= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Nekrose",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Entzündung= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Entzündung",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Kerngröße= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Kerngröße",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_L1= ggplot( data = vis_mat[vis_mat$Characteristic %in% "L1",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Pn1= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Pn1",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+p_Stroma= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Stroma_vitalerTumor",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
+
+p = ggpubr::ggarrange(p_Keratinisierung, p_Budding_10HPF, p_Zellnestgröße_zentral, p_Mitosen_10HPF,p_Nekrose,p_Entzündung,
+              labels = c("Keratinisierung", "Budding_10HPF", "Zellnestgröße","Mitosen_10HPF","Nekrose","Inflammation"),
+              ncol = 3, nrow = 2,  common.legend = TRUE)
+p
+####
+
+aggregate( vis_mat_pre$Budding_10HPF, FUN = mean, by = list(vis_mat_pre$Subtype))
+aggregate( vis_mat_pre$Budding_10HPF, FUN = max, by = list(vis_mat_pre$Subtype))
+
+#
+
+Zellnestgröße_ROC = meta_data[ !is.na(meta_data$Budding_10HPF), "Zellnestgröße_zentral"]
+aggregate( Zellnestgröße_ROC, FUN = mean, by = list(subtype))
+
+#
+
+Mitosen_10HPF = meta_data[ !is.na(meta_data$Mitosen_10HPF), "Mitosen_10HPF"]
+aggregate( Mitosen_10HPF, FUN = mean, by = list(subtype))
+
+#
+
+Mitosen_1HPF = meta_data[ !is.na(meta_data$Mitosen_HPF), "Mitosen_HPF"]
+aggregate( Mitosen_1HPF, FUN = mean, by = list(subtype))
+
+#
+
+Nekrose = meta_data[ !is.na(meta_data$Nekrose), "Nekrose"]
+aggregate( Nekrose, FUN = mean, by = list(subtype))
+
+#
+
+Entzündung = meta_data[ !is.na(meta_data$Entzündung), "Entzündung"]
+aggregate( Entzündung, FUN = mean, by = list(subtype))
+
+# Grading
+
+grading_t = as.data.frame(cbind(meta_data$Grading_WHO, meta_data$Subtype))
+grading_t = grading_t[!is.na(grading_t$V1) ,]
+table(grading_t)
+chisq.test(table(grading_t))
+
+# L1
+
+L1_t = as.data.frame(cbind(meta_data$L1, meta_data$Subtype))
+L1_t = L1_t[!is.na(L1_t$V1) ,]
+table(L1_t)
+chisq.test(table(L1_t))
+
+# Pn1, Strom
+
+Pn1_t = as.data.frame(cbind(meta_data$Pn1, meta_data$Subtype))
+Pn1_t = Pn1_t[!is.na(Pn1_t$V1) ,]
+table(Pn1_t)
+chisq.test(table(Pn1_t))
+
+# Stroma
+
+Stroma_t = as.data.frame(cbind(meta_data$Stroma_vitalerTumor, meta_data$Subtype))
+Stroma_t = Stroma_t[!is.na(Stroma_t$V1) ,]
+t.test(as.double(Stroma_t$V1[Stroma_t$V2 == "CL"]),as.double(Stroma_t$V1[Stroma_t$V2 == "MS"]))
+
+# Kerngröße
+
+Kerngröße_t = as.data.frame(cbind(meta_data$Kerngröße, meta_data$Subtype))
+Kerngröße_t = Kerngröße_t[!is.na(Kerngröße_t$V1) ,]
+t.test(as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "BA"]),as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "CL"]))
 
 ### Gene_set_reductions
 
