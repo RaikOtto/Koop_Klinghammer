@@ -32,12 +32,13 @@ meta_data = meta_info[colnames(expr_raw),]
 dim(expr_raw)
 
 ###
-i =79
+i =82
 genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
-#genes_of_interest_hgnc_t = read.table("~/MAPTor_NET/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
+#genes_of_interest_hgnc_t = read.table("~/Downloads/GOBP_CELL_CYCLE.tsv",sep ="\t", stringsAsFactors = F, header = F)
 genes_of_interest_hgnc_t$V1
 genes_of_interest_hgnc_t$V1[i]
 sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
+#sad_genes = genes_of_interest_hgnc_t$V1[3:nrow(genes_of_interest_hgnc_t)]
 sad_genes = sad_genes[sad_genes != ""]
 
 genes_of_interest_hgnc_t[i,1]
@@ -68,7 +69,7 @@ pheatmap::pheatmap(
   treeheight_row = 0,
   legend = F,
   fontsize_col = 7,
-  clustering_method = "ward.D"
+  clustering_method = "average"
 )
 
 aka3 = list(
