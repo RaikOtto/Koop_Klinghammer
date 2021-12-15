@@ -69,7 +69,7 @@ pheatmap::pheatmap(
   treeheight_row = 0,
   legend = F,
   fontsize_col = 7,
-  clustering_method = "average"
+  clustering_method = "ward.D"
 )
 
 aka3 = list(

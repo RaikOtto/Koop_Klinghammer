@@ -1,11 +1,8 @@
-require('NanoStringNorm')
+require('NanoStringNCTools')
 library("stringr")
 
 meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_Information.tsv",sep="\t",header =T, stringsAsFactors = F)
 meta_info$Raw_name = str_replace_all(meta_info$Raw_name, pattern = "-", "_")
-meta_info$OS = str_replace_all(meta_info$OS, pattern = ",", ".")
-meta_info$OS = as.double(meta_info$OS)
-meta_info$OS[is.na(meta_info$OS)] = ""
 
 excluded_files = meta_info$Raw_name[meta_info$Included == FALSE]
 #excluded_files = meta_info$Raw_name[as.character(meta_info$pID) != "365"]
@@ -32,31 +29,28 @@ for ( file in list.files("~/Koop_Klinghammer/Data/Raw_data/")){
   }
 }
 
-raw_data  = read.markup.RCC( rcc.path = "~/Koop_Klinghammer//Data/Raw_data/", rcc.pattern = "*.RCC")
+rcc_files <- dir( "~/Koop_Klinghammer/Data/Raw_data/", full.names = TRUE, pattern = "*")
+raw_data = readNanoStringRccSet(rcc_files, )
+head(assayData(raw_data)[["exprs"]])
+head(summary(raw_data, MARGIN = 1), 2)
+
+demoData <- normalize(raw_data, type="nSolver", fromELT = "exprs", toELT = "exprs_norm")
+assayDataElement(demoData, elt = "exprs_norm")[1:3, 1:2]
 
 ### tmp
-sample_names = names(raw_data$header)
+sample_names = names(raw_data$raw)
 sample_names = str_replace(sample_names, pattern = "^X","")
 sample_names = str_replace_all(sample_names, pattern = "\\.","_")
 
 meta_match = match( sample_names, meta_info$Raw_name, nomatch = 0)
 sample_names[meta_match == 0]
-colnames(raw_data$x)[-seq(3)] = meta_info$Sample_ID[meta_match]
-
+names(raw_data$raw)[-seq(3)] = meta_info$Sample_ID[meta_match]
+names(raw_data$raw)[1:3]
 ### normalization
 
 #norm.comp.results.test = norm.comp(raw_data, verbose = T)
-eset = NanoStringNorm::NanoStringNorm( 
-  raw_data,
-  CodeCount.methods = "sum",
-  Background.methods = "mean.2sd",
-  SampleContent.methods = "housekeeping.sum",
-  OtherNorm.methods = "vsn",
-  take.log = T,
-  round.values = T,
-  return.matrix.of.endogenous.probes = F,
-  verbose = T
-)
+eset = HKnorm( 
+  raw_data$raw)
 
 source_mat = eset$normalized.data
 m    = matrix( as.character(unlist( source_mat)), nrow=  dim(source_mat)[1], ncol = dim(source_mat)[2])

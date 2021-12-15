@@ -1,10 +1,11 @@
 library("stringr")
 
-balanced.centroid = read.table( "~/Koop_Klinghammer/Misc//balanced.centroid.txt", header=TRUE, row.names=1, sep="\t",stringsAsFactors = F)
+balanced.centroid = read.table( "~/Koop_Klinghammer/Misc/Archiv//balanced.centroid.txt", header=TRUE, row.names=1, sep="\t",stringsAsFactors = F)
 balanced.centroid_importance = sort(rowSums(abs(balanced.centroid)), decreasing = T)
 balanced.centroid = balanced.centroid[ match(names(balanced.centroid_importance),rownames(balanced.centroid)),]
 
-#pure_data = read.table("~/Koop_Klinghammer/Data/35S.14_03_2018.normalized.tsv", sep ="\t", header = T, row.names = 1)
+pure_data = read.table("~/Koop_Klinghammer/Data/Pure_data.05_06_2018.tsv", sep ="\t", header = T, row.names = 1)
+pure_data[1:5,1:5]
 
 ### Preparation
 
