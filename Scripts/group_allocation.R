@@ -1,69 +1,68 @@
-library("stringr")
+library(stringr)
+
+expr_raw = read.table("~/Koop_Klinghammer/Data/New_data.S138.Kulbe.tsv", sep ="\t", row.names = 1, header = T)
+colnames(expr_raw) = str_replace(colnames(expr_raw), pattern = "^X","")
+expr_raw[1:5,1:5]
+dim(expr_raw)
 
 balanced.centroid = read.table( "~/Koop_Klinghammer/Misc/Archiv//balanced.centroid.txt", header=TRUE, row.names=1, sep="\t",stringsAsFactors = F)
 balanced.centroid_importance = sort(rowSums(abs(balanced.centroid)), decreasing = T)
 balanced.centroid = balanced.centroid[ match(names(balanced.centroid_importance),rownames(balanced.centroid)),]
 
-pure_data = read.table("~/Koop_Klinghammer/Data/Pure_data.05_06_2018.tsv", sep ="\t", header = T, row.names = 1)
-pure_data[1:5,1:5]
+#pure_data = read.table(~/Koop_Klinghammer/Data/Pure_data.05_06_2018.tsv, sep =\t, header = T, row.names = 1)
 
 ### Preparation
 
-rownames(pure_data) = str_to_upper(rownames(pure_data))
-rownames(pure_data) = str_replace_all(rownames(pure_data), pattern = "\\_", "")
-rownames(pure_data) = str_replace_all(rownames(pure_data), pattern = "-", "")
+rownames(expr_raw) = str_to_upper(rownames(expr_raw))
+rownames(expr_raw) = str_replace_all(rownames(expr_raw), pattern = "\\_","" )
+rownames(expr_raw) = str_replace_all(rownames(expr_raw), pattern = "-","" )
 rownames(balanced.centroid) = str_to_upper(rownames(balanced.centroid))
-rownames(balanced.centroid) = str_replace_all(rownames(balanced.centroid), pattern = "\\_", "")
-rownames(balanced.centroid) = str_replace_all(rownames(balanced.centroid), pattern = "-", "")
-colnames(pure_data) = str_replace_all(colnames(pure_data), pattern = "^X", "")
-
-col_var = apply(as.matrix(pure_data),FUN = function(vec){return (var(as.double(vec) ))},MARGIN = 2)
-row_var = apply(as.matrix(pure_data),FUN = function(vec){return (var(as.double(vec) ))},MARGIN = 1)
-
-pure_data = pure_data[row_var > 0, col_var > 0]
-dim(pure_data)
-
+rownames(balanced.centroid) = str_replace_all(rownames(balanced.centroid), pattern = "\\_","" )
+rownames(balanced.centroid) = str_replace_all(rownames(balanced.centroid), pattern = "-","" )
+colnames(expr_raw) = str_replace_all(colnames(expr_raw), pattern = "^X","" )
 
 meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep="\t",header =T, stringsAsFactors = F)
-meta_data = meta_info[match(colnames(pure_data), as.character( meta_info$Sample_ID)),]
+meta_data = meta_info[match(colnames(expr_raw), as.character( meta_info$Sample_ID)),]
+dim(meta_data)
 
 ###
 
-expr = pure_data
 source("~/Koop_Klinghammer/Scripts/Classification_scripts.R")
-table( rownames(expr) %in% rownames(balanced.centroid) )
+table( rownames(expr_raw) %in% rownames(balanced.centroid) )
+table( rownames(balanced.centroid) %in% rownames(expr_raw) )
 
 centroid_genes = rownames(balanced.centroid)
-genes_matching_centroid = rownames(expr)[which(  (rownames(expr) %in% rownames(balanced.centroid) ) ) ]
-genes_matching_centroid = c( genes_matching_centroid, rep("",length(centroid_genes) - length(genes_matching_centroid)) )
-genes_not_matching_centroid = rownames(expr)[which(!(  (rownames(expr) %in% rownames(balanced.centroid) ) )) ]
-genes_not_matching_centroid = c(genes_not_matching_centroid, rep("",length(centroid_genes) - length(genes_not_matching_centroid)) )
-
-genes_present = data.frame(
-  "Matching_to_centroid" = genes_matching_centroid,
-  "Not_matching_to_centroid" = genes_not_matching_centroid,
-  "Centroid_genes" = centroid_genes
-)
-#write.table(genes_present, "~/Koop_Klinghammer/Results/First_results_11S_1C/Centroid_genes_And_not_centroid_genes.tsv",sep ="\t",quote = F, row.names = F)
-
+genes_matching_centroid = rownames(expr_raw)[which(  (rownames(expr_raw) %in% rownames(balanced.centroid) ) ) ]
+length(genes_matching_centroid)
+genes_not_matching_centroid = rownames(expr_raw)[which(!(  (rownames(expr_raw) %in% rownames(balanced.centroid) ) )) ]
+length(genes_not_matching_centroid)
 
 ### centroid classification
 
 pub_cor <<- matrix( as.double(), ncol = length( colnames( balanced.centroid )  ) )
-expr2bc = centroid2expr( balanced.centroid[,], expr )
+
+expr2bc = centroid2expr( balanced.centroid[,], expr_raw )
 colnames(expr2bc$correlation) = c("Sample","Subtype","Correlation","P_value")
 class_data = as.data.frame(expr2bc$correlation)
+dim(class_data)
 
-meta_match = match( as.character(class_data$Sample), meta_info$ID, nomatch = 0 )
+#write.table( class_data, "~/Downloads/Raw_classification_data.S138.tsv",sep ="\t", quote =F , row.names = FALSE)
+
+meta_match = match( as.character(class_data$Sample), meta_info$Sample_ID, nomatch = 0 )
 meta_info$Subtype = rep("",nrow(meta_info))
 meta_info$Subtype[meta_match] = as.character( class_data$Subtype )
 meta_info$P_value = rep("",nrow(meta_info))
 meta_info$P_value[meta_match] = as.double( as.character( class_data$P_value ) )
 
-meta_info$Included[as.double(meta_info$P_value) > 0.05 ] = "FALSE"
-meta_info$Included[meta_info$pID == 12] = "TRUE"
-<<<<<<< HEAD
-write.table(meta_info,"~/Koop_Klinghammer/Misc/Meta_Information.tsv",sep ="\t",quote =F,row.names =F)
-=======
-write.table(meta_info,"~/Koop_Klinghammer/Results/Gene_expression_radiation_stemness/Subtypes_HSNCC.tsv",sep ="\t",quote =F,row.names =F)
->>>>>>> 2718017b2c6108c64183e86875fb7dc1ef1bb075
+#meta_info[(as.double(meta_info$P_value[meta_match]) > 0.05),"Included"] = FALSE
+
+#write.table(meta_info,"~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t",quote =F,row.names =F)
+rownames(meta_info) = meta_info$Sample_ID
+
+meta_data = meta_info[colnames(expr_raw),]
+meta_data$P_value = as.double(meta_data$P_value)
+#expr_raw = expr_raw[,meta_data$P_value < .05]
+sum(meta_data$P_value < .05)
+#SLC16A1, AKR1C1, HIF1A, AKR1C3 E2F2, TMUB2, PRPF38A, STAT1, EGFR, LAG3, SLAMF6, ITGB1, CXCL10, AMMECR1L, TNFRSF1A, AREG, E6 (HPV16), VEGF, IDO1, DDX50, RPA2
+
+#write.table(expr_raw,"~/Koop_Klinghammer/Data/Normalize_data.S128.tsv",quote =FALSE, sep ="\t", row.names = TRUE)
