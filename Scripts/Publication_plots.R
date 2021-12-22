@@ -62,11 +62,11 @@ dim(expr)
 pheatmap::pheatmap(
   cor_mat,
   #expr,
-  #annotation_col = meta_data[,selection],
-  annotation_col = meta_data["Subtype"],
+  annotation_col = meta_data[,selection],
+  #annotation_col = meta_data["Subtype"],
   annotation_colors = aka3,
   show_rownames = F,
-  show_colnames = FALSE,
+  show_colnames = TRUE,
   treeheight_row = 0,
   legend = F,
   fontsize_col = 7,
@@ -231,12 +231,12 @@ colnames(umap_result$layout) = c("x","y")
 umap_p = ggplot(
   umap_result$layout,
   aes(x, y))
-umap_p = umap_p + geom_point(size = 4, aes(  color = as.character(vis_mat$Subtype) ))
+umap_p = umap_p + geom_point(size = 0, aes(  color = as.character(vis_mat$Subtype) ))
 umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = vis_mat$Subtype), level=.5, type ="t", size=1.5)
 umap_p = umap_p + scale_color_manual( values = c("black","darkgreen","blue")) ##33ACFF ##FF4C33
 
 umap_p = umap_p + theme(legend.position = "none") + xlab("") + ylab("")
-umap_p# +geom_text(aes(label=meta_data$Sample_ID, color = meta_data$Subtype),hjust=0, vjust=0)
+umap_p +geom_text(aes(label=meta_data$Sample_ID, color = meta_data$Subtype),hjust=0, vjust=0)
 custom.config$random_state
 
 #write.table(meta_data,"~/Downloads/Meta_info.S111.tsv",quote =FALSE,sep ="\t",row.names = FALSE)
