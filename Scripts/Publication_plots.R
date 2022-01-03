@@ -3,7 +3,7 @@ library("stringr")
 library("grid")
 
 expr_raw = read.table(
-  "~/Koop_Klinghammer/Data/Normalize_data.S128.tsv",
+  "~/Koop_Klinghammer/Data/Normalized_data.S121.Significant.tsv",
   sep ="\t",
   stringsAsFactors = F,
   header = T
@@ -15,10 +15,8 @@ dim(expr_raw)
 
 ### Prep
 
-###
-
 ## Figure 1
-meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_Information.tsv",sep ="\t", stringsAsFactors = F, header = T)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Archiv/Meta_Information.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$Sample_ID
 
 meta_data = meta_info[colnames(expr_raw),]
@@ -28,7 +26,7 @@ meta_data = meta_info[colnames(expr_raw),]
 #dim(expr_raw)
 
 ###
-i =82
+i = 13
 genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
 genes_of_interest_hgnc_t$V1
 genes_of_interest_hgnc_t$V1[i]
@@ -41,8 +39,8 @@ sad_genes[which(!(sad_genes %in% rownames(expr_raw)))]
 table(sad_genes %in% rownames(expr_raw) )
 
 #expr = expr_raw[ rownames(expr_raw) %in% sad_genes,]
-expr = expr_raw[ , meta_data$P_value < 5E-2]
-exclusion_samples = c("56","54","23","151","71","127","105","98","66","90","83","62","75","130","4","110","21")
+expr = expr_raw
+exclusion_samples = c("83","62","90","71","127","105","54","23","56","75","57","34","37")
 length(exclusion_samples)
 expr = expr[,!(colnames(expr) %in% exclusion_samples)]
 meta_data = meta_info[colnames(expr),]
@@ -50,28 +48,35 @@ cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
 
 #svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")
 selection = c("Subtype","Grading_WHO","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_10HPF","Nekrose","Entzündung")
-#selection = c("Subtype","Grading_WHO","Keratinisierung","Budding_10HPF","Zellnestgröße_ROC","Mitosen_10HPF","Nekrose","Entzündung")
+selection = c("Subtype","Grading_WHO")
+selection[!(selection %in% colnames(meta_data))]
 
 vis_mat_cor_plot = meta_data[,selection]
-vis_mat_cor_plot$Budding_10HPF = log(vis_mat_cor_plot$Budding_10HPF+1)
-vis_mat_cor_plot$Zellnestgröße_zentral = log(vis_mat_cor_plot$Zellnestgröße_zentral+1)
-vis_mat_cor_plot$Nekrose = log(vis_mat_cor_plot$Nekrose+1)
-vis_mat_cor_plot$Entzündung = log(vis_mat_cor_plot$Entzündung+1)
+not_na_vec = !is.na(vis_mat_cor_plot[,"Budding_10HPF"])
+vis_mat_cor_plot[not_na_vec,"Budding_10HPF"] = log(vis_mat_cor_plot[not_na_vec,"Budding_10HPF"]+1)
+vis_mat_cor_plot[not_na_vec,"Zellnestgröße_zentral"] = log(vis_mat_cor_plot[not_na_vec,"Zellnestgröße_zentral"]+1)
+vis_mat_cor_plot[not_na_vec,"Nekrose"] = log(vis_mat_cor_plot[not_na_vec,"Nekrose"]+1)
+vis_mat_cor_plot[not_na_vec,"Entzündung"] = log(vis_mat_cor_plot[not_na_vec,"Entzündung"]+1)
 
-dim(expr)
+#vis_mat_cor_plot[not_na_vec,"Budding_10HPF"] = log(vis_mat_cor_plot[ (not_na_vec,"Budding_10HPF"] / max(vis_mat_cor_plot[not_na_vec,"Budding_10HPF"]))+1))
+#vis_mat_cor_plot$Zellnestgröße_zentral = vis_mat_cor_plot$Zellnestgröße_zentral / max(vis_mat_cor_plot$Zellnestgröße_zentral)
+#vis_mat_cor_plot$Nekrose = vis_mat_cor_plot$Nekrose / max(vis_mat_cor_plot$Nekrose)
+#vis_mat_cor_plot$Entzündung = vis_mat_cor_plot$Entzündung / max(vis_mat_cor_plot$Entzündung)
+
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_1", width = 10, height = 10)
 pheatmap::pheatmap(
   cor_mat,
   #expr,
-  annotation_col = meta_data[,selection],
-  #annotation_col = meta_data["Subtype"],
+  annotation_col = vis_mat_cor_plot,
   annotation_colors = aka3,
   show_rownames = F,
-  show_colnames = TRUE,
+  show_colnames = FALSE,
   treeheight_row = 0,
   legend = F,
   fontsize_col = 7,
-  clustering_method = "ward.D"
+  clustering_method = "ward.D2"
 )
+dev.off()
 
 aka3 = list(
   Group = c(refractive = "red", sensitive = "darkgreen", intermediate = "orange"),
@@ -111,20 +116,43 @@ dev.off()
 
 ####
 
-selection_vis = c("Subtype","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_10HPF","Nekrose","Entzündung","Kerngröße","L1","Pn1","Stroma_vitalerTumor")
+selection_vis = c("Subtype","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_10HPF","Nekrose","Entzündung","Kerngröße","Stroma_vitalerTumor")
 vis_mat_pre = meta_data[!is.na(meta_data$Entzündung),selection_vis]
+vis_mat = reshape2::melt(vis_mat_pre)
+colnames(vis_mat) = c("Subtype","Characteristic","Value")
 vis_mat_pre$Budding_10HPF = log(vis_mat_pre$Budding_10HPF+1)
 vis_mat_pre$Zellnestgröße_zentral = log(vis_mat_pre$Zellnestgröße_zentral)
 vis_mat_pre$Mitosen_10HPF = log(vis_mat_pre$Mitosen_10HPF)
 vis_mat_pre$Nekrose  = log(vis_mat_pre$Nekrose+1)
 vis_mat_pre$Entzündung = log(vis_mat_pre$Entzündung+1)
 vis_mat_pre$Stroma_vitalerTumor = log(vis_mat_pre$Stroma_vitalerTumor+1)
+
 vis_mat = reshape2::melt(vis_mat_pre)
 colnames(vis_mat) = c("Subtype","Characteristic","Value")
 
-p = ggplot( data = vis_mat,aes( x = Characteristic, y = Value, fill = Subtype ))
-p = p +  geom_boxplot( ) + xlab("")
-p
+#
+pheno_plot = ggplot(vis_mat, aes( x = Characteristic, y = Value, fill = Subtype) )
+pheno_plot = pheno_plot + geom_boxplot(notch = TRUE,outlier.colour = "red", outlier.shape = 1)
+pheno_plot = pheno_plot + theme(axis.text=element_text(size=14)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + theme(legend.text = element_text(size=14))
+pheno_plot = pheno_plot + scale_fill_manual(values = c("black","darkgreen","blue"))
+pheno_plot = pheno_plot + ylab("Strength") + theme(legend.position = "top")
+pheno_plot
+#pheno_plot + ylim(c(0,4))
+
+scale_data = t(vis_mat_pre[,colnames(vis_mat_pre) != "Subtype"])
+data = apply(data, MARGIN = 1, FUN =scale)
+pheatmap::pheatmap(
+  data,
+  annotation_col = vis_mat_pre["Subtype"],
+  annotation_colors = aka3,
+  show_rownames = TRUE,
+  show_colnames = FALSE,
+  treeheight_row = 0,
+  legend = TRUE,
+  fontsize_col = 7,
+  clustering_method = "ward.D2"
+)
+
 
 #
 
@@ -139,72 +167,27 @@ p_L1= ggplot( data = vis_mat[vis_mat$Characteristic %in% "L1",],aes( x = Charact
 p_Pn1= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Pn1",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
 p_Stroma= ggplot( data = vis_mat[vis_mat$Characteristic %in% "Stroma_vitalerTumor",],aes( x = Characteristic, y = log(Value+1), fill = Subtype ))+  geom_boxplot( ) + xlab("") + scale_fill_manual(values=c("darkgreen","orange","blue"))
 
-p = ggpubr::ggarrange(p_Keratinisierung, p_Budding_10HPF, p_Zellnestgröße_zentral, p_Mitosen_10HPF,p_Nekrose,p_Entzündung,
-              labels = c("Keratinisierung", "Budding_10HPF", "Zellnestgröße","Mitosen_10HPF","Nekrose","Inflammation"),
-              ncol = 3, nrow = 2,  common.legend = TRUE)
+p = ggpubr::ggarrange(
+  p_Keratinisierung, p_Budding_10HPF, p_Zellnestgröße_zentral, p_Mitosen_10HPF,p_Nekrose,p_Entzündung,
+  labels = c("Keratinisierung", "Budding_10HPF", "Zellnestgröße","Mitosen_10HPF","Nekrose","Inflammation"),
+  ncol = 3, nrow = 2,  common.legend = TRUE)
 p
 ####
+library(dplyr)
 
-aggregate( vis_mat_pre$Budding_10HPF, FUN = mean, by = list(vis_mat_pre$Subtype))
-aggregate( vis_mat_pre$Budding_10HPF, FUN = max, by = list(vis_mat_pre$Subtype))
+meta_data[,]
 
-#
+base_data_mean = vis_mat %>% 
+  group_by(Subtype,Characteristic) %>% 
+  summarize(mean = mean(Value))
+base_data_SD = vis_mat %>% 
+  group_by(Subtype,Characteristic) %>% 
+  summarize(SD = sd(Value))
 
-Zellnestgröße_ROC = meta_data[ !is.na(meta_data$Budding_10HPF), "Zellnestgröße_zentral"]
-aggregate( Zellnestgröße_ROC, FUN = mean, by = list(subtype))
-
-#
-
-Mitosen_10HPF = meta_data[ !is.na(meta_data$Mitosen_10HPF), "Mitosen_10HPF"]
-aggregate( Mitosen_10HPF, FUN = mean, by = list(subtype))
-
-#
-
-Mitosen_1HPF = meta_data[ !is.na(meta_data$Mitosen_HPF), "Mitosen_HPF"]
-aggregate( Mitosen_1HPF, FUN = mean, by = list(subtype))
-
-#
-
-Nekrose = meta_data[ !is.na(meta_data$Nekrose), "Nekrose"]
-aggregate( Nekrose, FUN = mean, by = list(subtype))
-
-#
-
-Entzündung = meta_data[ !is.na(meta_data$Entzündung), "Entzündung"]
-aggregate( Entzündung, FUN = mean, by = list(subtype))
-
-# Grading
-
-grading_t = as.data.frame(cbind(meta_data$Grading_WHO, meta_data$Subtype))
-grading_t = grading_t[!is.na(grading_t$V1) ,]
-table(grading_t)
-chisq.test(table(grading_t))
-
-# L1
-
-L1_t = as.data.frame(cbind(meta_data$L1, meta_data$Subtype))
-L1_t = L1_t[!is.na(L1_t$V1) ,]
-table(L1_t)
-chisq.test(table(L1_t))
-
-# Pn1, Strom
-
-Pn1_t = as.data.frame(cbind(meta_data$Pn1, meta_data$Subtype))
-Pn1_t = Pn1_t[!is.na(Pn1_t$V1) ,]
-table(Pn1_t)
-chisq.test(table(Pn1_t))
-
-# Stroma
-
-Stroma_t = as.data.frame(cbind(meta_data$Stroma_vitalerTumor, meta_data$Subtype))
-Stroma_t = Stroma_t[!is.na(Stroma_t$V1) ,]
-t.test(as.double(Stroma_t$V1[Stroma_t$V2 == "CL"]),as.double(Stroma_t$V1[Stroma_t$V2 == "MS"]))
-
-# Kerngröße
-
-Kerngröße_t = as.data.frame(cbind(meta_data$Kerngröße, meta_data$Subtype))
-Kerngröße_t = Kerngröße_t[!is.na(Kerngröße_t$V1) ,]
-t.test(as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "BA"]),as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "CL"]))
+vis_mat = as.data.frame(vis_mat)
+data_vec = vis_mat %>% filter(Characteristic == "Keratinisierung")#[,-2]
+chisq.test()
+#t.test(as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "BA"]),as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "CL"]))
 
 ### umap
 library("umap")
@@ -214,6 +197,7 @@ custom.config$random_state = sample(1:1000,size = 1)
 #custom.config$random_state = 995
 custom.config$n_components=2
 
+cor_mat = cor(t(vis_mat_pre[,colnames(vis_mat_pre) != "Subtype"]))
 cor_mat = cor(expr)
 vis_mat = meta_info[colnames(cor_mat),]
 
@@ -231,12 +215,17 @@ colnames(umap_result$layout) = c("x","y")
 umap_p = ggplot(
   umap_result$layout,
   aes(x, y))
-umap_p = umap_p + geom_point(size = 0, aes(  color = as.character(vis_mat$Subtype) ))
+umap_p = umap_p + geom_point(size = 4, aes(  color = as.character(vis_mat$Subtype) ))
 umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = vis_mat$Subtype), level=.5, type ="t", size=1.5)
 umap_p = umap_p + scale_color_manual( values = c("black","darkgreen","blue")) ##33ACFF ##FF4C33
 
 umap_p = umap_p + theme(legend.position = "none") + xlab("") + ylab("")
-umap_p +geom_text(aes(label=meta_data$Sample_ID, color = meta_data$Subtype),hjust=0, vjust=0)
+
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_2.svg", width = 10, height = 10)
+umap_p# +geom_text(aes(label=meta_data$Sample_ID, color = meta_data$Subtype),hjust=0, vjust=0)
+dev.off()
+
 custom.config$random_state
+#281
 
 #write.table(meta_data,"~/Downloads/Meta_info.S111.tsv",quote =FALSE,sep ="\t",row.names = FALSE)
