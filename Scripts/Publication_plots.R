@@ -1,6 +1,7 @@
 library("ggplot2")
 library("stringr")
 library("grid")
+library("umap")
 
 expr_raw = read.table(
   "~/Koop_Klinghammer/Data/Normalized_data.S121.Significant.tsv",
@@ -16,7 +17,7 @@ dim(expr_raw)
 ### Prep
 
 ## Figure 1
-meta_info = read.table("~/Koop_Klinghammer/Misc/Archiv/Meta_Information.tsv",sep ="\t", stringsAsFactors = F, header = T)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$Sample_ID
 
 meta_data = meta_info[colnames(expr_raw),]
@@ -38,9 +39,8 @@ genes_of_interest_hgnc_t[i,1]
 sad_genes[which(!(sad_genes %in% rownames(expr_raw)))]
 table(sad_genes %in% rownames(expr_raw) )
 
-#expr = expr_raw[ rownames(expr_raw) %in% sad_genes,]
-expr = expr_raw
-exclusion_samples = c("83","62","90","71","127","105","54","23","56","75","57","34","37")
+expr = expr_raw#[ rownames(expr_raw) %in% sad_genes,]
+exclusion_samples = c("36","33","66","89","61","82","74","21","2","55","22","53","70","125","104","64","94")
 length(exclusion_samples)
 expr = expr[,!(colnames(expr) %in% exclusion_samples)]
 meta_data = meta_info[colnames(expr),]
@@ -52,29 +52,25 @@ selection = c("Subtype","Grading_WHO")
 selection[!(selection %in% colnames(meta_data))]
 
 vis_mat_cor_plot = meta_data[,selection]
-not_na_vec = !is.na(vis_mat_cor_plot[,"Budding_10HPF"])
-vis_mat_cor_plot[not_na_vec,"Budding_10HPF"] = log(vis_mat_cor_plot[not_na_vec,"Budding_10HPF"]+1)
-vis_mat_cor_plot[not_na_vec,"Zellnestgröße_zentral"] = log(vis_mat_cor_plot[not_na_vec,"Zellnestgröße_zentral"]+1)
-vis_mat_cor_plot[not_na_vec,"Nekrose"] = log(vis_mat_cor_plot[not_na_vec,"Nekrose"]+1)
-vis_mat_cor_plot[not_na_vec,"Entzündung"] = log(vis_mat_cor_plot[not_na_vec,"Entzündung"]+1)
+#not_na_vec = !is.na(vis_mat_cor_plot[,"Budding_10HPF"])
+#vis_mat_cor_plot[not_na_vec,"Mitosen_10HPF"] = log(vis_mat_cor_plot[not_na_vec,"Mitosen_10HPF"]+1)
+#vis_mat_cor_plot[not_na_vec,"Budding_10HPF"] = log(vis_mat_cor_plot[not_na_vec,"Budding_10HPF"]+1)
+#vis_mat_cor_plot[not_na_vec,"Zellnestgröße_zentral"] = log(vis_mat_cor_plot[not_na_vec,"Zellnestgröße_zentral"]+1)
+#vis_mat_cor_plot[not_na_vec,"Nekrose"] = log(vis_mat_cor_plot[not_na_vec,"Nekrose"]+1)
+#vis_mat_cor_plot[not_na_vec,"Entzündung"] = log(vis_mat_cor_plot[not_na_vec,"Entzündung"]+1)
 
-#vis_mat_cor_plot[not_na_vec,"Budding_10HPF"] = log(vis_mat_cor_plot[ (not_na_vec,"Budding_10HPF"] / max(vis_mat_cor_plot[not_na_vec,"Budding_10HPF"]))+1))
-#vis_mat_cor_plot$Zellnestgröße_zentral = vis_mat_cor_plot$Zellnestgröße_zentral / max(vis_mat_cor_plot$Zellnestgröße_zentral)
-#vis_mat_cor_plot$Nekrose = vis_mat_cor_plot$Nekrose / max(vis_mat_cor_plot$Nekrose)
-#vis_mat_cor_plot$Entzündung = vis_mat_cor_plot$Entzündung / max(vis_mat_cor_plot$Entzündung)
-
-#svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_1", width = 10, height = 10)
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_1.Grading.svg", width = 10, height = 10)
 pheatmap::pheatmap(
   cor_mat,
-  #expr,
+  #vis_mat_cor_plot,
   annotation_col = vis_mat_cor_plot,
   annotation_colors = aka3,
   show_rownames = F,
   show_colnames = FALSE,
   treeheight_row = 0,
-  legend = F,
+  legend = TRUE,
   fontsize_col = 7,
-  clustering_method = "ward.D2"
+  clustering_method = "ward.D"
 )
 dev.off()
 
@@ -100,7 +96,7 @@ col_vec[col_vec == "BA"] = "black"
 col_vec[col_vec == "MS"] = "blue"
 col_vec[col_vec == "CL"] = "green"
 
-#svg("~/Koop_Klinghammer/Results/23_10_2019/PCA_63.svg")
+#svg("~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_2.svg", width = 10, height = 10)
 
 ggbiplot::ggbiplot(
     pcr,
@@ -108,42 +104,49 @@ ggbiplot::ggbiplot(
     ellipse = TRUE,
     circle = TRUE,
     var.axes = F,
-    labels = meta_data$Sample_ID
+    labels = meta_data$SampleID
 )  + scale_color_manual(name="Clusters", values=c("Black", "darkgreen", "blue"))
 
 dev.off()
-#dev.off()
 
 ####
 
-selection_vis = c("Subtype","Keratinisierung","Budding_10HPF","Zellnestgröße_zentral","Mitosen_10HPF","Nekrose","Entzündung","Kerngröße","Stroma_vitalerTumor")
+#Budding_1HPF		Budding_10HPF		Zellnestgröße_zentral		Mitosen_HPF		Mitosen_10HPF		Kerngröße	Stroma_vitalerTumor		Nekrose		Entzündung
+selection_vis = c("Subtype","PFS_Monate","Keratinisierung","Budding_1HPF","Budding_10HPF","Zellnestgröße_zentral","Mitosen_HPF","Mitosen_10HPF","Nekrose","Entzündung","Kerngröße","Stroma_vitalerTumor")
 vis_mat_pre = meta_data[!is.na(meta_data$Entzündung),selection_vis]
-vis_mat = reshape2::melt(vis_mat_pre)
-colnames(vis_mat) = c("Subtype","Characteristic","Value")
-vis_mat_pre$Budding_10HPF = log(vis_mat_pre$Budding_10HPF+1)
-vis_mat_pre$Zellnestgröße_zentral = log(vis_mat_pre$Zellnestgröße_zentral)
-vis_mat_pre$Mitosen_10HPF = log(vis_mat_pre$Mitosen_10HPF)
-vis_mat_pre$Nekrose  = log(vis_mat_pre$Nekrose+1)
-vis_mat_pre$Entzündung = log(vis_mat_pre$Entzündung+1)
-vis_mat_pre$Stroma_vitalerTumor = log(vis_mat_pre$Stroma_vitalerTumor+1)
+#scale_data = scale((vis_mat_pre[,colnames(vis_mat_pre) != "Subtype"]))
 
 vis_mat = reshape2::melt(vis_mat_pre)
 colnames(vis_mat) = c("Subtype","Characteristic","Value")
+vis_mat = vis_mat %>% group_by(Subtype, Characteristic) %>% summarise( Proportion = log(Value+1) )
+
+#vis_mat_pre$Budding_10HPF = log(vis_mat_pre$Budding_10HPF+1)
+#vis_mat_pre$Zellnestgröße_zentral = log(vis_mat_pre$Zellnestgröße_zentral)
+#vis_mat_pre$Mitosen_10HPF = log(vis_mat_pre$Mitosen_10HPF)
+#vis_mat_pre$Nekrose  = log(vis_mat_pre$Nekrose+1)
+#vis_mat_pre$Entzündung = log(vis_mat_pre$Entzündung+1)
+#vis_mat_pre$Stroma_vitalerTumor = log(vis_mat_pre$Stroma_vitalerTumor+1)
+
+#vis_mat = reshape2::melt(vis_mat_pre)
+#colnames(vis_mat) = c("Subtype","Characteristic","Value")
 
 #
-pheno_plot = ggplot(vis_mat, aes( x = Characteristic, y = Value, fill = Subtype) )
-pheno_plot = pheno_plot + geom_boxplot(notch = TRUE,outlier.colour = "red", outlier.shape = 1)
+pheno_plot = ggplot(vis_mat, aes( x = Characteristic, y = Proportion, fill = Subtype) )
+#pheno_plot = pheno_plot + geom_boxplot(notch = TRUE,outlier.colour = "red", outlier.shape = 1)
+pheno_plot = pheno_plot + geom_violin()
 pheno_plot = pheno_plot + theme(axis.text=element_text(size=14)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + theme(legend.text = element_text(size=14))
 pheno_plot = pheno_plot + scale_fill_manual(values = c("black","darkgreen","blue"))
-pheno_plot = pheno_plot + ylab("Strength") + theme(legend.position = "top")
+pheno_plot = pheno_plot + ylab("Log of measurement") + theme(legend.position = "top")
 pheno_plot
 #pheno_plot + ylim(c(0,4))
 
-scale_data = t(vis_mat_pre[,colnames(vis_mat_pre) != "Subtype"])
-data = apply(data, MARGIN = 1, FUN =scale)
+vis_mat_pre = vis_mat_pre[!is.na(vis_mat_pre$Budding_10HPF),]
+
+scale_data = scale(t(vis_mat_pre[,colnames(vis_mat_pre) != "Subtype"]))
+#data = apply(data, MARGIN = 1, FUN =scale)
 pheatmap::pheatmap(
-  data,
-  annotation_col = vis_mat_pre["Subtype"],
+  scale_data,
+  annotation_col = meta_data["Subtype"],
   annotation_colors = aka3,
   show_rownames = TRUE,
   show_colnames = FALSE,
@@ -190,14 +193,13 @@ chisq.test()
 #t.test(as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "BA"]),as.double(Kerngröße_t$V1[Kerngröße_t$V2 == "CL"]))
 
 ### umap
-library("umap")
 
 custom.config = umap.defaults
 custom.config$random_state = sample(1:1000,size = 1)
-#custom.config$random_state = 995
+custom.config$random_state = 281
 custom.config$n_components=2
 
-cor_mat = cor(t(vis_mat_pre[,colnames(vis_mat_pre) != "Subtype"]))
+#cor_mat = cor(t(vis_mat_pre[,colnames(vis_mat_pre) != "Subtype"]))
 cor_mat = cor(expr)
 vis_mat = meta_info[colnames(cor_mat),]
 
@@ -221,8 +223,9 @@ umap_p = umap_p + scale_color_manual( values = c("black","darkgreen","blue")) ##
 
 umap_p = umap_p + theme(legend.position = "none") + xlab("") + ylab("")
 
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_1.svg", width = 10, height = 10)
 #svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_2.svg", width = 10, height = 10)
-umap_p# +geom_text(aes(label=meta_data$Sample_ID, color = meta_data$Subtype),hjust=0, vjust=0)
+umap_p# +geom_text(aes(label=vis_mat$SampleID, color = vis_mat$Subtype),hjust=0, vjust=0)
 dev.off()
 
 custom.config$random_state

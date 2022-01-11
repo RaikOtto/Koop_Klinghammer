@@ -19,8 +19,8 @@ rownames(balanced.centroid) = str_replace_all(rownames(balanced.centroid), patte
 rownames(balanced.centroid) = str_replace_all(rownames(balanced.centroid), pattern = "-","" )
 colnames(expr_raw) = str_replace_all(colnames(expr_raw), pattern = "^X","" )
 
-meta_info = read.table("~/Koop_Klinghammer/Misc/Archiv/Meta_Information.tsv",sep="\t",header =T, stringsAsFactors = F)
-meta_data = meta_info[match(colnames(expr_raw), as.character( meta_info$Sample_ID)),]
+meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep="\t",header =T, stringsAsFactors = F)
+meta_data = meta_info[match(colnames(expr_raw), as.character( meta_info$SampleID)),]
 dim(meta_data)
 
 ###
@@ -44,9 +44,9 @@ colnames(expr2bc$correlation) = c("Sample","Subtype","Correlation","P_value")
 class_data = as.data.frame(expr2bc$correlation)
 dim(class_data)
 
-#write.table( class_data, "~/Downloads/Normalized_classification_data.S131.tsv",sep ="\t", quote =F , row.names = FALSE)
+#write.table( class_data, "~/Koop_Klinghammer/Results/Normalized_classification_data.S130.tsv",sep ="\t", quote =F , row.names = FALSE)
 
-meta_match = match( colnames(expr_raw), meta_info$Sample_ID, nomatch = 0 )
+meta_match = match( colnames(expr_raw), meta_info$SampleID, nomatch = 0 )
 meta_info$Subtype = rep("",nrow(meta_info))
 meta_info$Subtype[meta_match] = as.character( class_data$Subtype )
 meta_info$P_value = rep("",nrow(meta_info))
@@ -54,8 +54,8 @@ meta_info$P_value[meta_match] = as.double( as.character( class_data$P_value ) )
 
 meta_info[(as.double(meta_info$P_value[meta_match]) > 0.05),"Included"] = FALSE
 
-#write.table(meta_info,"~/Koop_Klinghammer/Misc/Meta_Information.tsv",sep ="\t",quote =F,row.names =F)
-rownames(meta_info) = meta_info$Sample_ID
+write.table(meta_info,"~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t",quote =F,row.names =F)
+rownames(meta_info) = meta_info$SampleID
 
 meta_data = meta_info[colnames(expr_raw),]
 meta_data$P_value = as.double(meta_data$P_value)

@@ -1,7 +1,7 @@
 require('NanoStringNorm')
 library("stringr")
 
-meta_info = read.table("~/Koop_Klinghammer/Misc/Archiv/Meta_Information.tsv",sep="\t",header =T, stringsAsFactors = F)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Datensatz_CEFCID.tsv",sep="\t",header =T, stringsAsFactors = F)
 meta_info$Raw_name = str_replace_all(meta_info$Raw_name, pattern = "-", "_")
 
 rcc_files <- dir( "~/Koop_Klinghammer/Data/Raw_data_new/", full.names = TRUE, pattern = "*")
@@ -20,7 +20,7 @@ normalized_data = NanoStringNorm::NanoStringNorm(
   take.log = T,
   round.values = T,
   return.matrix.of.endogenous.probes = F,
-  verbose = T
+  verbose = TRUE
 )
 ### normalization
 
@@ -36,6 +36,6 @@ col_labels = str_replace( colnames(source_mat)[-seq(3)], pattern = "^X", "")
 colnames(data) = col_labels
 
 matcher = match(colnames(data), meta_info$Raw_name, nomatch = 0)
-colnames(expr_raw) = meta_info$Sample_ID[matcher]
-#write.table(expr_raw, "~/Koop_Klinghammer/Data/New_data.S130.tsv", quote= F, row.names = T, sep = "\t")
+colnames(data) = meta_info$Sample_ID[matcher]
+#write.table(data, "~/Koop_Klinghammer/Data/New_data.S130.tsv", quote= F, row.names = T, sep = "\t")
 
