@@ -9,5 +9,7 @@ aka3 = list(
   Entzündung = c(low = "white", high = "black"),
   Budding_10HPF = c(low = "white", high = "black"),
   Keratinisierung = c(low = "white", high = "black"),
-  Grading_WHO = c( "1" = "darkgreen","2" = "yellow", "3" = "red", "Unknown" = "gray")
+  Grading_WHO = c( "1" = "darkgreen","2" = "yellow", "3" = "red", "Unknown" = "gray"),
+  OS_Monate = c("red","yellow", "darkgreen"),
+  survival_vec = c("Low"="darkgreen","High" = "red")
 )
