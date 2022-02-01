@@ -1,7 +1,7 @@
 require('NanoStringNorm')
 library("stringr")
 
-meta_info = read.table("~/Koop_Klinghammer/Misc/Datensatz_CEFCID.tsv",sep="\t",header =T, stringsAsFactors = F)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Mapping_table.csv",sep="\t",header =T, stringsAsFactors = F)
 meta_info$Raw_name = str_replace_all(meta_info$Raw_name, pattern = "-", "_")
 
 rcc_files <- dir( "~/Koop_Klinghammer/Data/Raw_data_new/", full.names = TRUE, pattern = "*")
@@ -37,5 +37,5 @@ colnames(data) = col_labels
 
 matcher = match(colnames(data), meta_info$Raw_name, nomatch = 0)
 colnames(data) = meta_info$Sample_ID[matcher]
-#write.table(data, "~/Koop_Klinghammer/Data/New_data.S130.tsv", quote= F, row.names = T, sep = "\t")
+#write.table(data, "~/Koop_Klinghammer/Data/Normalized_data.S114.20012022.tsv", quote= F, row.names = T, sep = "\t")
 

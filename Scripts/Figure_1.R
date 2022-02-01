@@ -5,11 +5,11 @@ library("umap")
 library("dplyr")
 
 expr_raw = read.table(
-  "~/Koop_Klinghammer/Data/Data.S104.tsv",
+  "~/Koop_Klinghammer/Data/S103.tsv",
   sep ="\t",
   stringsAsFactors = F,
-  header = T
-  #row.names = F
+  header = T,
+  row.names = 1
 )
 colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
 expr_raw[1:5,1:5]
@@ -21,10 +21,9 @@ dim(expr_raw)
 meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$Sample_ID
 
-meta_data = meta_info[colnames(expr_raw),]
-expr = expr_raw
-meta_data = meta_info[colnames(expr),]
-cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
+matcher = match(colnames(expr_raw), meta_info$SampleID)
+meta_data = meta_info[matcher,]
+cor_mat = cor(expr_raw);pcr = prcomp(t(cor_mat))
 
 ## umap
 
@@ -33,12 +32,9 @@ custom.config$random_state = sample(1:1000,size = 1)
 custom.config$random_state = 281
 custom.config$n_components= 2
 
-cor_mat = cor(expr)
-vis_mat = meta_info[colnames(cor_mat),]
-
 umap_result = umap::umap(
   cor_mat,
-  colvec = vis_mat$Subtype,
+  colvec = meta_data$Subtype,
   preserve.seed = TRUE,
   config=custom.config
 )
@@ -49,10 +45,10 @@ colnames(umap_result$layout) = c("x","y")
 umap_p = ggplot(
   umap_result$layout,
   aes(x, y))
-umap_p = umap_p + geom_point(size = 4, aes(  color = as.character(vis_mat$Subtype) ))
-umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = vis_mat$Subtype), level=.5, type ="t", size=1.5)
+umap_p = umap_p + geom_point(size = 4, aes(  color = as.character(meta_data$Subtype) ))
+umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = meta_data$Subtype), level=.5, type ="t", size=1.5)
 umap_p = umap_p + scale_color_manual( values = c("black","darkgreen","blue")) ##33ACFF ##FF4C33
-umap_p = umap_p + theme(legend.position = "none") + xlab("") + ylab("")
+umap_p = umap_p + theme(legend.position = "top") + xlab("") + ylab("")
 
 #svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_1.svg", width = 10, height = 10)
 umap_p# +geom_text(aes(label=vis_mat$SampleID, color = vis_mat$Subtype),hjust=0, vjust=0)
