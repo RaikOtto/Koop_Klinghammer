@@ -25,9 +25,11 @@ matcher = match(as.character(colnames(cor_mat)), as.character(meta_info$SampleID
 meta_data = meta_info[matcher,]
 rownames(meta_data) = meta_data$SampleID
 
-selection = c("Subtype","Grading")
+selection = c("Subtype","Entzündung_ROC","Grading")
 meta_data[is.na(meta_data$Grading),"Grading"] = "Unknown"
 meta_data$Grading = factor(meta_data$Grading, levels = c("3","2","1","Unknown"))
+meta_data$Entzündung_ROC[is.na(meta_data$Entzündung_ROC)] = "Unknown"
+meta_data$Entzündung_ROC = as.factor(meta_data$Entzündung_ROC)
 
 #svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_2.Grading.svg", width = 10, height = 10)
 pheatmap::pheatmap(
@@ -37,7 +39,7 @@ pheatmap::pheatmap(
   show_rownames = F,
   show_colnames = FALSE,
   treeheight_row = 0,
-  legend = TRUE,
+  legend = FALSE,
   fontsize_col = 7,
   clustering_method = "ward.D2"
 )

@@ -82,7 +82,7 @@ dev.off()
 selectors = c("Stroma_vitalerTumor","Budding_10HPF","Mitosen_10HPF","Nekrose","Zellnestgröße_zentral","Entzündung","L1","Pn1")
 selectors[!(selectors %in% colnames(meta_data))]
 
-vis_mat = meta_data[!is.na(meta_data$Entzündung),selectors]
+vis_mat = meta_data[!is.na(meta_data$Entzündung_ROC),selectors]
 vis_mat = vis_mat[,selectors]
 vis_mat = scale(t(vis_mat))
 
@@ -295,6 +295,72 @@ pheatmap::pheatmap(
   clustering_method = "average"
 )
 dev.off()
+
+# Entzündung_ROC 4
+
+i = 4
+genes_of_interest_hgnc_t$V1[i]
+sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
+sad_genes = sad_genes[sad_genes != ""]
+sad_genes = sad_genes[which(sad_genes %in% rownames(expr_raw) )]
+
+expr = expr_raw[sad_genes,]
+cor_mat = cor(expr)
+
+rownames(meta_data) = meta_data$SampleID
+annotation_mat = meta_data[colnames(cor_mat),]
+annotation_mat$Entzündung = log(annotation_mat$Entzündung+1)
+annotation_mat$Entzündung_ROC[is.na(annotation_mat$Entzündung_ROC)] = "Unknown"
+annotation_mat$Entzündung_ROC = as.factor(annotation_mat$Entzündung_ROC)
+
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_8.LM22.svg", width = 10, height = 10)
+pheatmap::pheatmap(
+  cor_mat,
+  #expr,
+  annotation_col = annotation_mat[,c("Subtype","Entzündung_ROC")],
+  annotation_colors = aka3,
+  show_rownames = FALSE,
+  show_colnames = FALSE,
+  legend = FALSE,
+  treeheight_row = 0,
+  fontsize_col = 7,
+  clustering_method = "ward.D2"
+)
+dev.off()
+
+## umap
+
+meta_data$Entzündung_ROC[is.na(meta_data$Entzündung_ROC)] = "Unknown"
+
+custom.config = umap.defaults
+custom.config$random_state = sample(1:1000,size = 1)
+#custom.config$random_state = 281
+custom.config$n_components= 2
+
+cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
+umap_result = umap::umap(
+  cor_mat,
+  colvec = meta_data$Entzündung_ROC,
+  preserve.seed = TRUE,
+  config=custom.config
+)
+
+umap_result$layout = as.data.frame(umap_result$layout)
+colnames(umap_result$layout) = c("x","y")
+
+umap_p = ggplot(
+  umap_result$layout,
+  aes(x, y))
+umap_p = umap_p + geom_point(size = 4, aes(  color = as.character(meta_data$Subtype) ))
+umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = meta_data$Subtype), level=.3, type ="t", size=1.5)
+#umap_p = umap_p + scale_color_manual( values = c("black","darkgreen","blue")) ##33ACFF ##FF4C33
+umap_p = umap_p + theme(legend.position = "top") + xlab("") + ylab("")
+#umap_p = umap_p + geom_text(aes(label = meta_data$SampleID, color = meta_data$Subtype),hjust=0, vjust=0)
+
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_1.svg", width = 10, height = 10)
+umap_p 
+dev.off()
+
 
 ### Statistical tests
 

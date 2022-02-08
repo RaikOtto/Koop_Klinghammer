@@ -12,5 +12,7 @@ aka3 = list(
   Grading = c( "1" = "darkgreen","2" = "yellow", "3" = "red","Unknown" = "gray"),
   survival_vec = c("Low"="darkgreen","High" = "red"),
   PFS_Monate_ab_Einschluss = c(high="black",low = "white"),
-  OS_ab_ED = c(high="black",low = "white")
+  OS_ab_ED = c(high="black",low = "white"),
+  #Entzündung_ROC = c("2" = "#efad16", "1" = "#0a7e8c","Unknown" = "#aaa9ad")
+  Entzündung_ROC = c("2" = "black", "1" = "white","Unknown" = "#aaa9ad")
 )
