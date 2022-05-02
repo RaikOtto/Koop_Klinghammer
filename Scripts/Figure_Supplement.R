@@ -23,6 +23,7 @@ rownames(meta_info) = meta_info$Sample_ID
 
 matcher = match(colnames(expr_raw), meta_info$SampleID, nomatch = 0)
 meta_data = meta_info[matcher,]
+rownames(meta_data) = meta_data$SampleID
 
 ### Figure SM 1 UMAP with labels
 
@@ -175,99 +176,38 @@ dev.off()
 genes_of_interest_hgnc_t = read.table("~/Koop_Klinghammer/Misc/Stem_signatures.tsv",sep ="\t", stringsAsFactors = F, header = F)
 genes_of_interest_hgnc_t$V1
 
-### SM Figure 7 EMT 3
+# EMT Budding 1 HPF threshold
 
-i = 3
+i = 13
 genes_of_interest_hgnc_t$V1[i]
 sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
 sad_genes = sad_genes[sad_genes != ""]
 sad_genes = sad_genes[which(sad_genes %in% rownames(expr_raw) )]
 
-vis_mat = reshape2::melt(expr_raw[sad_genes,])
-colnames(vis_mat) = c("Sample","MFAP4")
-vis_mat$Subtype = meta_data$Subtype
-order_vec = order(vis_mat$MFAP4 )
-vis_mat$Sample = factor(vis_mat$Sample, levels = vis_mat$Sample[order_vec])
+annotation_mat = meta_data[meta_data$Survivalstatistik_neuestes_Sample == 1,]
+dim(annotation_mat)
 
-p = ggplot( data = vis_mat,aes( x = Sample, y = MFAP4, fill = Subtype ))
-p = p + geom_col(position = position_dodge2( preserve = "single"),color = "black") 
-p = p + geom_bar(stat="identity", position=position_dodge(), color = "black")
-p = p + theme_minimal() + xlab("") + ylab("MFAP4 expression") + theme(legend.position="top")
-p = p + theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())# + ylim(0,6)
-p = p + scale_fill_manual(values = c("black","darkgreen","blue"))
-p = p + annotate("text", x=50,y =10, label= "Wilcoxon-Smith test CL & BA versus MS p-value: 0.002", size = 4.5 )
-
-#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_6.EMT.MFAP4_expression.svg", width = 10, height = 10)
-p
-dev.off()
-
-rank_vec = vis_mat$Subtype[order_vec]
-rank_MS = which(rank_vec == "MS")
-rank_BA = which(rank_vec == "BA")
-rank_CL = which(rank_vec == "CL")
-rank_CL_BA = which(rank_vec %in% c("BA","CL"))
-
-wilcox.test(rank_MS,rank_BA)
-wilcox.test(rank_MS,rank_CL_BA)
-
-# Keratinization 5
-
-i = 5
-genes_of_interest_hgnc_t$V1[i]
-sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
-sad_genes = sad_genes[sad_genes != ""]
-sad_genes = sad_genes[which(sad_genes %in% rownames(expr_raw) )]
-
+#expr = expr_raw[sad_genes,colnames(expr_raw) %in% annotation_mat$SampleID]
 expr = expr_raw[sad_genes,]
 cor_mat = cor(expr)
-
-rownames(meta_data) = meta_data$SampleID
-annotation_mat = meta_data[colnames(cor_mat),]
-#annotation_mat$Keratinisierung = log(annotation_mat$Keratinisierung+1)
 
 #svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_6.Alpha-Keratin.svg", width = 10, height = 10)
 pheatmap::pheatmap(
   cor_mat,
-  annotation_col = annotation_mat[,c("Subtype","Keratinisierung")],
+  #scale(expr),
+  annotation_col = meta_data[,c("Subtype","Budding_1_hpf_threshold","Stroma_vitalerTumor_threshold","Entzündung_ROC","L1")],
   annotation_colors = aka3,
   show_rownames = FALSE,
   show_colnames = FALSE,
   treeheight_row = 0,
   fontsize_col = 7,
-  clustering_method = "ward.D2"
+  clustering_method = "complete"
 )
 dev.off()
 
-# Nekrose 10
+# LM22 Entzündung_ROC
 
-i = 10
-genes_of_interest_hgnc_t$V1[i]
-sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
-sad_genes = sad_genes[sad_genes != ""]
-sad_genes = sad_genes[which(sad_genes %in% rownames(expr_raw) )]
-
-expr = expr_raw[sad_genes,]
-cor_mat = cor(expr)
-
-rownames(meta_data) = meta_data$SampleID
-annotation_mat = meta_data[colnames(cor_mat),]
-annotation_mat$Nekrose = log(annotation_mat$Nekrose+1)
-
-#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_7.Necrosis.svg", width = 10, height = 10)
-pheatmap::pheatmap(
-  cor_mat,
-  #expr,
-  annotation_col = annotation_mat[,c("Subtype","Nekrose")],
-  annotation_colors = aka3,
-  show_rownames = FALSE,
-  show_colnames = FALSE,
-  treeheight_row = 0,
-  fontsize_col = 7,
-  clustering_method = "ward.D2"
-)
-dev.off()
-
-# LM22 11
+meta_data[is.na(meta_data$Entzündung_ROC),"Entzündung_ROC"] = "Unknown"
 
 i = 11
 genes_of_interest_hgnc_t$V1[i]
@@ -275,72 +215,41 @@ sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_
 sad_genes = sad_genes[sad_genes != ""]
 sad_genes = sad_genes[which(sad_genes %in% rownames(expr_raw) )]
 
+annotation_mat = meta_data[meta_data$Survivalstatistik_neuestes_Sample == 1,]
+dim(annotation_mat)
+
+#expr = expr_raw[sad_genes,colnames(expr_raw) %in% annotation_mat$SampleID]
 expr = expr_raw[sad_genes,]
 cor_mat = cor(expr)
 
-rownames(meta_data) = meta_data$SampleID
-annotation_mat = meta_data[colnames(cor_mat),]
-annotation_mat$Entzündung = log(annotation_mat$Entzündung+1)
-
-#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_8.LM22.svg", width = 10, height = 10)
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_6.Alpha-Keratin.svg", width = 10, height = 10)
 pheatmap::pheatmap(
   cor_mat,
-  #expr,
-  annotation_col = annotation_mat[,c("Subtype","Entzündung")],
+  #scale(expr),
+  annotation_col = meta_data[,c("Subtype","Budding_1_hpf_threshold","Stroma_vitalerTumor_threshold","Entzündung_ROC","L1")],
   annotation_colors = aka3,
   show_rownames = FALSE,
   show_colnames = FALSE,
   treeheight_row = 0,
   fontsize_col = 7,
-  clustering_method = "average"
-)
-dev.off()
-
-# Entzündung_ROC 4
-
-i = 4
-genes_of_interest_hgnc_t$V1[i]
-sad_genes = str_to_upper( as.character( genes_of_interest_hgnc_t[i,3:ncol(genes_of_interest_hgnc_t)]) ) # 13
-sad_genes = sad_genes[sad_genes != ""]
-sad_genes = sad_genes[which(sad_genes %in% rownames(expr_raw) )]
-
-expr = expr_raw[sad_genes,]
-cor_mat = cor(expr)
-
-rownames(meta_data) = meta_data$SampleID
-annotation_mat = meta_data[colnames(cor_mat),]
-annotation_mat$Entzündung = log(annotation_mat$Entzündung+1)
-annotation_mat$Entzündung_ROC[is.na(annotation_mat$Entzündung_ROC)] = "Unknown"
-annotation_mat$Entzündung_ROC = as.factor(annotation_mat$Entzündung_ROC)
-
-#svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_8.LM22.svg", width = 10, height = 10)
-pheatmap::pheatmap(
-  cor_mat,
-  #expr,
-  annotation_col = annotation_mat[,c("Subtype","Entzündung_ROC")],
-  annotation_colors = aka3,
-  show_rownames = FALSE,
-  show_colnames = FALSE,
-  legend = FALSE,
-  treeheight_row = 0,
-  fontsize_col = 7,
-  clustering_method = "ward.D2"
+  clustering_method = "ward.D"
 )
 dev.off()
 
 ## umap
 
-meta_data$Entzündung_ROC[is.na(meta_data$Entzündung_ROC)] = "Unknown"
+meta_data[is.na(meta_data$L1),"L1"] = "Unknown"
+meta_data[is.na(meta_data$Entzündung_ROC),"Entzündung_ROC"] = "Unknown"
 
 custom.config = umap.defaults
 custom.config$random_state = sample(1:1000,size = 1)
-#custom.config$random_state = 281
+custom.config$random_state = 281
 custom.config$n_components= 2
 
 cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
 umap_result = umap::umap(
   cor_mat,
-  colvec = meta_data$Entzündung_ROC,
+  colvec = meta_data$Budding_1_hpf_threshold,
   preserve.seed = TRUE,
   config=custom.config
 )
@@ -352,8 +261,8 @@ umap_p = ggplot(
   umap_result$layout,
   aes(x, y))
 umap_p = umap_p + geom_point(size = 4, aes(  color = as.character(meta_data$Subtype) ))
-umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = meta_data$Subtype), level=.3, type ="t", size=1.5)
-#umap_p = umap_p + scale_color_manual( values = c("black","darkgreen","blue")) ##33ACFF ##FF4C33
+umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = meta_data$Entzündung_ROC), type ="t", size=1.5, level = .5)
+umap_p = umap_p + scale_color_manual( values = c("white","black","blue","black","darkgreen","gray")) ##33ACFF ##FF4C33
 umap_p = umap_p + theme(legend.position = "top") + xlab("") + ylab("")
 #umap_p = umap_p + geom_text(aes(label = meta_data$SampleID, color = meta_data$Subtype),hjust=0, vjust=0)
 

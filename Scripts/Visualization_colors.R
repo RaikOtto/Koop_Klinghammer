@@ -14,5 +14,8 @@ aka3 = list(
   PFS_Monate_ab_Einschluss = c(high="black",low = "white"),
   OS_ab_ED = c(high="black",low = "white"),
   #Entzündung_ROC = c("2" = "#efad16", "1" = "#0a7e8c","Unknown" = "#aaa9ad")
-  Entzündung_ROC = c("2" = "black", "1" = "white","Unknown" = "#aaa9ad")
+  Entzündung_ROC = c("2" = "black", "1" = "white","Unknown" = "#aaa9ad"),
+  Budding_1_hpf_threshold= c("1" = "black", "0" = "white","Unknown" = "gray"),
+  L1= c("1" = "black", "0" = "white","Unknown" = "gray"),
+  Stroma_vitalerTumor_threshold= c("1" = "black", "0" = "white","Unknown" = "gray")
 )
