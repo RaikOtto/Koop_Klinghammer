@@ -4,7 +4,7 @@ library("grid")
 library("umap")
 
 expr_raw = read.table(
-  "~/Koop_Klinghammer/Data/Data.S104.tsv",
+  "~/Koop_Klinghammer/Data/",
   sep ="\t",
   stringsAsFactors = F,
   header = T
