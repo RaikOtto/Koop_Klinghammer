@@ -31,8 +31,8 @@ meta_data$Grading = factor(meta_data$Grading, levels = c("3","2","1","Unknown"))
 meta_data$Entzündung_ROC[is.na(meta_data$Entzündung_ROC)] = "Unknown"
 meta_data$Entzündung_ROC = as.factor(meta_data$Entzündung_ROC)
 
-#svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_2.Grading.svg", width = 10, height = 10)
-pheatmap::pheatmap(
+
+p = pheatmap::pheatmap(
   cor_mat,
   annotation_col = meta_data[,selection],
   annotation_colors = aka3,
@@ -45,4 +45,7 @@ pheatmap::pheatmap(
 )
 dev.off()
 
-#table(meta_data$Subtype,meta_data$CefcidNr)
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_2.Grading.svg", width = 10, height = 10)
+print(p)
+dev.off()
+

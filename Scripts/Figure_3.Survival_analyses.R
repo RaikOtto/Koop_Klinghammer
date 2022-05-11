@@ -52,17 +52,16 @@ selector = "Budding_1_hpf_threshold"
 
 selection_vector = meta_data_vis_os[,selector]
 
+
 fit_os = survival::survfit( survival::Surv( as.double(OS_ab_ED), censor_OS ) ~ selection_vector, data = meta_data_vis_os)
 survminer::surv_pvalue(fit_os, data = meta_data_vis_os)$pval
 #print(survminer::ggsurvplot(fit_os, data = meta_data_vis_os, risk.table = F, pval = T, censor.size = 10,  palette = c("black","darkgreen","blue")))
 
 ## OS_Monate_ab_Einschluss
 
-selection_vector = meta_data_vis_os[,selector]
-
 fit_os = survival::survfit( survival::Surv( as.double(OS_Monate_ab_Einschluss), censor_OS ) ~ selection_vector, data = meta_data_vis_os)
 survminer::surv_pvalue(fit_os, data = meta_data_vis_os)$pval
-surv_plot = survminer::ggsurvplot(
+survminer::ggsurvplot(
   fit_os,
   data = meta_data_vis_os,
   risk.table = F,
