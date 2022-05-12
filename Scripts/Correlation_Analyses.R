@@ -32,12 +32,16 @@ meta_data_vis = meta_data # OS_Monate_ab_Einschluss BA CL PFS_Monate_ab_Einschlu
 
 # OS_ab_ED # OS_Monate_ab_Einschluss # PFS_Monate_ab_Einschluss # PFS_ab_ED
 #parameters = c("Tumorzellgehalt","Grading","Keratinisierung","Budding_1HPF","Budding_10HPF","Zellnestgröße_zentral","Mitosen_HPF","Mitosen_10HPF","Kerngröße","Stroma_vitalerTumor","Nekrose","Entzündung","L1","Pn1","Tumorstadium_codiert","Raucher","Alkohol")
-parameters = c("OS_ab_ED","OS_Monate_ab_Einschluss","PFS_Monate_ab_Einschluss","PFS_ab_ED","Tumorzellgehalt","Grading","Keratinisierung","Budding_1HPF","Budding_10HPF","Zellnestgröße_zentral","Mitosen_HPF","Mitosen_10HPF","Kerngröße","Stroma_vitalerTumor","Nekrose","Entzündung","L1","Pn1","Tumorstadium_codiert","Raucher","Alkohol")
+parameters = c("OS_ab_ED","OS_Monate_ab_Einschluss","PFS_Monate_ab_Einschluss","PFS_ab_ED","Tumorzellgehalt","Grading","Keratinisierung","Budding_1HPF","Zellnestgröße_zentral","Mitosen_HPF","Kerngröße","Stroma_vitalerTumor","Nekrose","Entzündung","L1","Pn1","Tumorstadium_codiert","Raucher","Alkohol")
 parameters[! parameters %in% colnames(meta_data)]
 parameter_matrix = meta_data[,parameters]
 parameter_matrix = parameter_matrix[!is.na(parameter_matrix[,1]),]
 
 correlation_mat = cor(parameter_matrix  )
+order_mat = as.dist((1-correlation_mat)/2)
+hc <- hclust(order_mat)
+correlation_mat = correlation_mat[hc$order, hc$order]
+
 correlation_mat[upper.tri(correlation_mat)] = NA
 diag(correlation_mat) = 0
 
