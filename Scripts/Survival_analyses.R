@@ -27,24 +27,14 @@ meta_data = meta_data %>% filter(as.character(Survivalstatistik_neuestes_Sample)
 length(meta_data$Survivalstatistik_neuestes_Sample)
 dim(meta_data)
 
-meta_data_vis = meta_data
-#meta_data_vis = meta_data %>% filter(Arm_codiert == 1)
-#meta_data_vis = meta_data %>% filter(Arm_codiert == 2)
-#meta_data_vis = meta_data_vis %>% filter(Subtype %in% c("MS","CL"))
+meta_data_vis = meta_data %>% filter(!is.na(meta_data$PFS_Monate_ab_Einschluss))
+#meta_data_vis = meta_data %>% filter(!is.na(meta_data$OS_Monate_ab_Einschluss))
 
-# PFS_ab_ED PFS_Monate_ab_Einschluss PFS_Monate
+## 
 
-meta_data_vis_pfs = meta_data_vis %>% filter(!is.na(meta_data_vis$PFS_Monate_ab_Einschluss))
-
-## PFS_ab_ED
-
-fit_pfs = survival::survfit( survival::Surv( as.double(PFS_ab_ED), censor_PFS ) ~ Subtype, data = meta_data_vis_pfs)
-survminer::surv_pvalue(fit_pfs, data = meta_data_vis_pfs)$pval
-print(survminer::ggsurvplot(fit_pfs, data = meta_data_vis_pfs, risk.table = F, pval = T, censor.size = 10))
-
-## PFS_Monate_ab_Einschluss
-
-schwellert = meta_data_vis_pfs$Budding_1HPF
+selector = "Budding_1HPF"
+meta_data_vis_pfs = meta_data_vis[!is.na( meta_data_vis[,selector]),]
+schwellert = meta_data_vis_pfs[,selector]
 schwellert[schwellert %in% c(0,1)] = 0
 schwellert[schwellert > 1 ] = 1
 
@@ -52,8 +42,31 @@ schwellert = meta_data_vis_pfs$Stroma_vitalerTumor
 schwellert[schwellert < 31] = 0
 schwellert[schwellert >= 31 ] = 1
 
-fit_pfs = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$PFS_Monate_ab_Einschluss), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)
-survminer::surv_pvalue(fit_pfs, data = meta_data_vis_pfs)$pval
+selector = "Grading" # 0.034
+selector = "Budding_1HPF_ROC"
+selector = "Budding_10HPF_ROC"
+selector = "Keratinisierung"
+selector = "Subtype"
+selector = "Zellnestgröße_zentral"
+selector = "Zellnestgröße_ROC"
+selector = "Mitosen_HPF_ROC"
+selector = "Stroma_ROC"
+selector = "Nekrose_ROC"
+selector = "Entzündung_ROC"
+selector = "L1"
+selector = "Pn1"
+meta_data_vis_pfs = meta_data_vis[!is.na( meta_data_vis_pfs[,selector]),]
+schwellert = meta_data_vis_pfs[,selector]
+
+fit = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$PFS_ab_ED), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)
+survminer::surv_pvalue(fit, data = meta_data_vis_pfs)$pval
+fit = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$PFS_Monate_ab_Einschluss), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)
+survminer::surv_pvalue(fit, data = meta_data_vis_pfs)$pval
+fit = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$OS_ab_ED), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)
+survminer::surv_pvalue(fit, data = meta_data_vis_pfs)$pval
+fit = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$OS_Monate_ab_Einschluss), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)
+survminer::surv_pvalue(fit, data = meta_data_vis_pfs)$pval
+
 print(survminer::ggsurvplot(fit_pfs, data = meta_data_vis_pfs, risk.table = F, pval = T, censor.size = 10))
 
 #svg(filename = "~/Deko_Projekt/Results/Images/Figure_5_survival_ductal_three.svg", width = 10, height = 10)
@@ -102,7 +115,10 @@ meta_data_vis_os = meta_data_vis %>% filter(!is.na(selector))
 meta_data_vis_os$schwellert = meta_data_vis_os[,selector]
 selector
 
-fit_os = survival::survfit( survival::Surv( as.double(meta_data_vis_os$OS_ab_ED), meta_data_vis_os$censor_OS ) ~ meta_data_vis_os$schwellert)
+#fit_os = survival::survfit( survival::Surv( as.double(meta_data_vis_os$OS_ab_ED), meta_data_vis_os$censor_OS ) ~ meta_data_vis_os$schwellert)
+#fit_os = survival::survfit( survival::Surv( as.double(meta_data_vis_os$OS_Monate_ab_Einschluss), meta_data_vis_os$censor_OS ) ~ meta_data_vis_os$schwellert)
+#fit_os = survival::survfit( survival::Surv( as.double(meta_data_vis_os$PFS_ab_ED), meta_data_vis_os$censor_OS ) ~ meta_data_vis_os$schwellert)
+#fit_os = survival::survfit( survival::Surv( as.double(meta_data_vis_os$PFS_Monate_ab_Einschluss), meta_data_vis_os$censor_OS ) ~ meta_data_vis_os$schwellert)
 survminer::surv_pvalue(fit_os, data = meta_data_vis_os)$pval
 
 #pdf("~/Downloads/L1.OS_Monate_ab_Einschluss.pdf")
@@ -110,7 +126,6 @@ print(survminer::ggsurvplot(fit_os, data = meta_data_vis_os, risk.table = F, pva
 #dev.off()
 
 ## Schwellwert
-
 
 schwellert = meta_data_vis_os$Budding_1HPF
 schwellert[schwellert %in% c(0,1)] = 0
