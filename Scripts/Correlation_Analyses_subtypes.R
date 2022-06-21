@@ -18,11 +18,13 @@ dim(expr_raw)
 
 ### Prep
 
+selectors = c("Subtype","Histotyp","Grading_WHO","Keratinization","Tumor_cell_budding_HPF_2_tier","Tumor_cell_budding_10HPF_2_tier","Cell_nest_size_2_tier","Mitotic_Count_HPF_2_tier","Mitotic_Count_10HPF_2_tier","Nuclear_Size_2_tier","Stroma_Content_2_tier","Necrosis_2_tier","Inflammatory_Infiltrate_2_tier","Lymphangiosis","Perineural_Invasion","Best_Response")
+
 ## Figure 1
 
-meta_info = read.table("~/Koop_Klinghammer/Misc/meta_info_table_klinghammer.tsv",sep ="\t", stringsAsFactors = F, header = T)
-rownames(meta_info) = meta_info$SampleID
-matcher = match(colnames(expr_raw),meta_info$SampleID, nomatch = 0)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
+rownames(meta_info) = meta_info$Sample_ID
+matcher = match(colnames(expr_raw),meta_info$Sample_ID, nomatch = 0)
 
 meta_data = meta_info[matcher,]
 #meta_data = meta_data %>% filter(Histotyp != "")
@@ -31,6 +33,7 @@ meta_data = meta_info[matcher,]
 # CATEGORICAL
 
 parameters_categorical = c("Grading","Histotyp","Budding_1HPC_ROC","Minimal_cell_nest_size_ROC","Mitotic_activity_1_HPF_ROC","Nuclear_size_ROC","Stroma_Tumor_Ratio_ROC","Necrosis_ROC","Inflammatory_infiltration_ROC","Lymphangiosis","Perineural_invasion","Disease_control_rate","Best_response","Localisation_primary_tumor")
+parameters_categorical %in% colnames(meta_info)
 
 meta_data_vis = meta_data[meta_data$Subtype %in% c("BA","CL"),]
 dim(meta_data_vis) # BA 39
