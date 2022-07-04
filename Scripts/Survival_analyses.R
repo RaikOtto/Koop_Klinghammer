@@ -30,7 +30,7 @@ dim(meta_data)
 meta_data_vis = meta_data %>% filter(!is.na(meta_data$PFS_Monate_ab_Einschluss))
 #meta_data_vis = meta_data %>% filter(!is.na(meta_data$OS_Monate_ab_Einschluss))
 
-## 
+##
 
 selector = "Budding_1HPF"
 meta_data_vis_pfs = meta_data_vis[!is.na( meta_data_vis[,selector]),]

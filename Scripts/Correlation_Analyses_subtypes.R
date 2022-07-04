@@ -20,7 +20,7 @@ dim(expr_raw)
 
 ## Figure 1
 
-meta_info = read.table("~/Koop_Klinghammer/Misc/meta_info_table_klinghammer.tsv",sep ="\t", stringsAsFactors = F, header = T)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$SampleID
 matcher = match(colnames(expr_raw),meta_info$SampleID, nomatch = 0)
 
