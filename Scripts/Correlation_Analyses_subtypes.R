@@ -4,79 +4,75 @@ library("grid")
 library("umap")
 library("dplyr")
 
-
-expr_raw = read.table(
-  "~/Koop_Klinghammer/Data/S103.tsv",
-  sep ="\t",
-  stringsAsFactors = F,
-  header = T,
-  row.names = 1
-)
-colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
-expr_raw[1:5,1:5]
-dim(expr_raw)
-
 ### Prep
 
-selectors = c("Subtype","Histotyp","Grading_WHO","Keratinization","Tumor_cell_budding_HPF_2_tier","Tumor_cell_budding_10HPF_2_tier","Cell_nest_size_2_tier","Mitotic_Count_HPF_2_tier","Mitotic_Count_10HPF_2_tier","Nuclear_Size_2_tier","Stroma_Content_2_tier","Necrosis_2_tier","Inflammatory_Infiltrate_2_tier","Lymphangiosis","Perineural_Invasion","Best_Response")
+selectors = c("Subtype","Histotyp","Grading_WHO","Keratinization","Tumor_cell_budding","Tumor_cell_budding_2_tier","Cell_nest_size","Cell_nest_size_2_tier","Mitotic_Count","Mitotic_Count_2_tier","Nuclear_Size","Nuclear_Size_2_tier","Stroma_Content","Stroma_Content_2_tier","Necrosis","Necrosis_2_tier","Inflammatory_Infiltrate","Inflammatory_Infiltrate_2_tier","Lymphangiosis","Perineural_Invasion","DCR","Best_Response","Localization_primary_tumor","Tumorstadium_codiert","Overall_Survival_from_diagnosis","Overall_Survivall_from_Randomisation","Progression_free_Survivall_from_Randomisation","Progression_free_Survivall_from_Diagnosis")
 
 ## Figure 1
 
-meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
-rownames(meta_info) = meta_info$Sample_ID
-#matcher = match(colnames(expr_raw),meta_info$Sample_ID, nomatch = 0)
-
-meta_data = meta_info
-
+meta_data = meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
+selectors[ ! (selectors %in% colnames(meta_data))]
 # CATEGORICAL
 
-parameters_categorical = c("Grading","Histotyp","Budding_1HPC_ROC","Minimal_cell_nest_size_ROC","Mitotic_activity_1_HPF_ROC","Nuclear_size_ROC","Stroma_Tumor_Ratio_ROC","Necrosis_ROC","Inflammatory_infiltration_ROC","Lymphangiosis","Perineural_invasion","Disease_control_rate","Best_response","Localisation_primary_tumor")
-parameters_categorical %in% colnames(meta_info)
+parameters_categorical = c("Subtype","Histotyp","Grading_WHO","Tumor_cell_budding_2_tier","Cell_nest_size_2_tier","Mitotic_Count_2_tier","Nuclear_Size_2_tier","Stroma_Content_2_tier","Necrosis_2_tier","Inflammatory_Infiltrate_2_tier","Lymphangiosis","Perineural_Invasion","DCR","Best_Response","Localization_primary_tumor")
+parameters_double = c("Keratinization","Tumor_cell_budding","Cell_nest_size","Mitotic_Count","Nuclear_Size","Stroma_Content","Necrosis","Inflammatory_Infiltrate","Overall_Survival_from_diagnosis","Overall_Survivall_from_Randomisation","Progression_free_Survivall_from_Randomisation","Progression_free_Survivall_from_Diagnosis","Tumorstadium_codiert")-----
 
-meta_data_vis = meta_data[meta_data$Subtype %in% c("BA","CL"),]
-dim(meta_data_vis) # BA 39
+meta_data_vis = meta_data#[meta_data$Subtype %in% c("BA","CL"),]
+dim(meta_data_vis) # 113 37
 
-for( parameter in parameters_categorical ){
-  
-  print(parameter)
-  
-  ana_table = as.data.frame(cbind(
-    (meta_data_vis[,"Subtype"]),
-    (meta_data_vis[,parameter])
-  ))
-  ana_table = ana_table[!is.na(ana_table[,2]),]
-  ana_table = ana_table[ ana_table[,2] != "" ,]
-  test_statistic = table(ana_table)
-  
-  suppressWarnings(
-    print( chisq.test(test_statistic)$p.value )
-  )
+result_mat_categorial <<- matrix(as.character(), ncol = 4)
+for( i in seq(1,length(parameters_categorical)-1) ){
+  for( j in seq(i+1,length(parameters_categorical)) ){
+    
+    parameter_1 = parameters_categorical[i]
+    parameter_2 = parameters_categorical[j]
+    
+    ana_table = as.data.frame(cbind(
+      (meta_data_vis[,parameter_1]),
+      (meta_data_vis[,parameter_2])
+    ))
+    
+    ana_table = ana_table[ (!is.na(ana_table[,1]) &  ( ana_table[,1] != "")), ]
+    ana_table = ana_table[ (!is.na(ana_table[,2]) &  ( ana_table[,2] != "")), ]
+    test_statistic = table(ana_table)
+    
+    p_value =  chisq.test(test_statistic)$p.value
+    
+    if ( p_value < 0.05){
+      print( c(parameter_1, parameter_2, p_value) )
+    }
+    result_mat_categorial = rbind(result_mat_categorial, c("categorial",parameter_1, parameter_2, p_value))
+  }
 }
+colnames(result_mat_categorial) = c("Type","Parameter_1","Parameter_2","P_value")
 
 ###### NUMERIC
 
-parameters_double = c("Keratinization","Budding_1HPF","Minimal_cell_nest_size","Mitotic_activity_1_HPF","Nuclear_size","Stroma_Tumor_Ratio","Necrosis","Inflammatory_infiltration","Age_at_randomisation")
-Subtype_1 = c("MS","CL")
-Subtype_2 = c("BA")
-dim(meta_data_vis) # BA 39
+result_mat_numeric <<- matrix(as.character(), ncol = 4)
+for( i in seq(1,length(parameters_double)-1) ){
+  for( j in seq(i+1,length(parameters_double)) ){
+    
+    parameter_1 = parameters_double[i]
+    parameter_2 = parameters_double[j]
+    
+    ana_table = as.data.frame(cbind(
+      (meta_data_vis[,parameter_1]),
+      (meta_data_vis[,parameter_2])
+    ))
+    
+    ana_table = ana_table[ (!is.na(ana_table[,1]) &  ( ana_table[,1] != "")), ]
+    ana_table = ana_table[ (!is.na(ana_table[,2]) &  ( ana_table[,2] != "")), ]
 
-for( parameter in parameters_double ){
-  
-  ana_table = as.data.frame(cbind(
-    (meta_data[,"Subtype"]),
-    (meta_data[,parameter])
-  ))
-  ana_table = ana_table[!is.na(ana_table[,2]),]
-  ana_table = ana_table[ ana_table[,2] != "" ,]
-  subtypte_data_1 = as.double(ana_table[ana_table[,1] == Subtype_1,2])
-  subtypte_data_2 = as.double(ana_table[ana_table[,1] == Subtype_2,2])
-  
-  result = t.test(subtypte_data_1, subtypte_data_2)$p.value
-  
-  if ( result < 0.05){
-      print(c(Subtype_1,Subtype_2,parameter, round(result,2)))
+    p_value =  cor.test(ana_table[,1],ana_table[,2])$p.value
+    correlation =  cor(ana_table[,1],ana_table[,2])
+    
+    if ( p_value < 0.05){
+      print( c(parameter_1, parameter_2, p_value) )
+    }
+    result_mat_numeric = rbind(result_mat_numeric, c("numeric",parameter_1, parameter_2, p_value))
   }
 }
+colnames(result_mat_numeric) = c("Type","Parameter_1","Parameter_2","P_value")
 
 ### correlation matrix
 
