@@ -24,11 +24,9 @@ selectors = c("Subtype","Histotyp","Grading_WHO","Keratinization","Tumor_cell_bu
 
 meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$Sample_ID
-matcher = match(colnames(expr_raw),meta_info$Sample_ID, nomatch = 0)
+#matcher = match(colnames(expr_raw),meta_info$Sample_ID, nomatch = 0)
 
-meta_data = meta_info[matcher,]
-#meta_data = meta_data %>% filter(Histotyp != "")
-#meta_data = meta_data %>% filter(! is.na(Disease_control_rate ))
+meta_data = meta_info
 
 # CATEGORICAL
 
