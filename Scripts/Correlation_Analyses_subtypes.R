@@ -15,7 +15,7 @@ selectors[ ! (selectors %in% colnames(meta_data))]
 # CATEGORICAL
 
 parameters_categorical = c("Subtype","Histotyp","Grading_WHO","Tumor_cell_budding_2_tier","Cell_nest_size_2_tier","Mitotic_Count_2_tier","Nuclear_Size_2_tier","Stroma_Content_2_tier","Necrosis_2_tier","Inflammatory_Infiltrate_2_tier","Lymphangiosis","Perineural_Invasion","DCR","Best_Response","Localization_primary_tumor")
-parameters_double = c("Keratinization","Tumor_cell_budding","Cell_nest_size","Mitotic_Count","Nuclear_Size","Stroma_Content","Necrosis","Inflammatory_Infiltrate","Overall_Survival_from_diagnosis","Overall_Survivall_from_Randomisation","Progression_free_Survivall_from_Randomisation","Progression_free_Survivall_from_Diagnosis","Tumorstadium_codiert")-----
+parameters_double = c("Keratinization","Tumor_cell_budding","Cell_nest_size","Mitotic_Count","Nuclear_Size","Stroma_Content","Necrosis","Inflammatory_Infiltrate","Overall_Survival_from_diagnosis","Overall_Survivall_from_Randomisation","Progression_free_Survivall_from_Randomisation","Progression_free_Survivall_from_Diagnosis","Tumorstadium_codiert")
 
 meta_data_vis = meta_data#[meta_data$Subtype %in% c("BA","CL"),]
 dim(meta_data_vis) # 113 37
@@ -74,6 +74,45 @@ for( i in seq(1,length(parameters_double)-1) ){
 }
 colnames(result_mat_numeric) = c("Type","Parameter_1","Parameter_2","P_value")
 
+###### ANOVA
+
+result_mat_anova <<- matrix(as.character(), ncol = 4)
+for( i in seq(1,length(parameters_double)) ){
+  for( j in seq(1,length(parameters_double)) ){
+    
+    parameter_1 = parameters_categorical[i]
+    parameter_2 = parameters_double[j]
+    
+    ana_table = as.data.frame(cbind(
+      (meta_data_vis[,parameter_1]),
+      (meta_data_vis[,parameter_2])
+    ))
+    
+    ana_table = ana_table[ (!is.na(ana_table[,1]) &  ( ana_table[,1] != "")), ]
+    ana_table = ana_table[ (!is.na(ana_table[,2]) &  ( ana_table[,2] != "")), ]
+    
+    aov_analysis =  aov(ana_table[,2] ~ as.factor(ana_table[,1]))
+    p_value_results = TukeyHSD(aov_analysis)
+    
+    # extract th class label identities
+    res = p_value_results[names(p_value_results)]
+    labels = rownames(as.data.frame(res))
+    
+    length_res = length(unlist(p_value_results))
+    indices = length_res/4
+    p_values = as.double(unlist(p_value_results)[seq(length_res-indices +1,length_res)])
+    
+    labels_para_2 = paste(parameter_2, as.vector(labels), sep ="_")
+    anova_res_mat = matrix(c(rep("anova", length(p_values)),rep(parameter_1,length_res/4), labels_para_2, p_values), nrow = length(p_values))
+    result_mat_anova = rbind(result_mat_anova, anova_res_mat)
+  }
+}
+colnames(result_mat_anova) = c("Type","Parameter_1","Parameter_2","P_value")
+
+### output everything
+
+res_mat = rbind(result_mat_categorial,result_mat_numeric,result_mat_anova)
+#write.table(res_mat, "~/Downloads/Phenotype_correlations.tsv", sep ="\t",row.names = FALSE)
 ### correlation matrix
 
 parameters_survival = c("Overall_survial","Progression_free_survial","Progression_free_survial_diagnosis","Overall_survival_diagnosis")
