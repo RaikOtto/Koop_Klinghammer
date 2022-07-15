@@ -45,7 +45,7 @@ dim(expr_raw)
 subtype_vec = class_data[match(colnames(expr_raw),class_data$Sample),"Subtype"]
 p_value_vec = class_data[match(colnames(expr_raw),class_data$Sample),"P_value"]
 
-#write.table( class_data, "~/Koop_Klinghammer/Results/Data.S108.20012022.tsv",sep ="\t", quote =F , row.names = FALSE)
+#write.table( class_data, "~/Koop_Klinghammer/Results/Data.S114.tsv",sep ="\t", quote =F , row.names = FALSE)
 
 matcher = match(colnames(expr_raw),meta_info$SampleID,nomatch = 0)
 meta_data = meta_info[matcher,]

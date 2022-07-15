@@ -12,7 +12,7 @@ expr_raw = read.table(
   header = T,
   row.names = 1
 )
-colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
+colnames(expr_raw) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
 expr_raw[1:5,1:5]
 dim(expr_raw)
 
@@ -21,9 +21,9 @@ dim(expr_raw)
 meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$Sample_ID
 
-matcher = match(colnames(expr_raw), meta_info$SampleID, nomatch = 0)
+matcher = match(colnames(expr_raw), meta_info$Sample_ID, nomatch = 0)
 meta_data = meta_info[matcher,]
-rownames(meta_data) = meta_data$SampleID
+rownames(meta_data) = meta_data$Sample_ID
 
 ### Figure SM 1 UMAP with labels
 
@@ -52,7 +52,7 @@ umap_p = umap_p + geom_point(size = .5, aes(  color = as.character(meta_data$Sub
 umap_p = umap_p + stat_ellipse( linetype = 1, aes( color = meta_data$Subtype), level=.5, type ="t", size=1.5)
 umap_p = umap_p + scale_color_manual( values = c("black","darkgreen","blue")) ##33ACFF ##FF4C33
 umap_p = umap_p + theme(legend.position = "top") + xlab("") + ylab("")
-umap_p = umap_p + geom_text(aes(label = meta_data$SampleID, color = meta_data$Subtype),hjust=0, vjust=0)
+umap_p = umap_p + geom_text(aes(label = meta_data$Sample_ID, color = meta_data$Subtype),hjust=0, vjust=0)
 
 #svg(filename = "~/Koop_Klinghammer/Results/Figures/Supplement/SM_Figure_1.svg", width = 10, height = 10)
 umap_p 
