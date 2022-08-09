@@ -15,27 +15,27 @@ expr_raw = read.table(
 colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
 
 meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
-rownames(meta_info) = meta_info$SampleID
-matcher = match( colnames(expr_raw), meta_info$SampleID, nomatch = 0)
+rownames(meta_info) = meta_info$Sample_ID
+matcher = match( colnames(expr_raw), meta_info$Sample_ID, nomatch = 0)
 dim(expr_raw)
 
 ## Figure AREG EGRF
 meta_data = meta_info[matcher,]
-candidates = meta_data$SampleID[which(meta_data$Survivalstatistik_neuestes_Sample == 1)]
+candidates = meta_data$Sample_ID[! is.na(meta_data$Subtype)]#[which(meta_data$Survivalstatistik_neuestes_Sample == 1)]
 length(candidates)
 
 expr = expr_raw[c("EGFR","AREG"),match(candidates, colnames(expr_raw))]
 vis_mat = reshape2::melt(t(expr))
 colnames(vis_mat) = c("Sample","Gene","Value")
-Subtype = meta_data[ match(vis_mat$Sample, meta_data$SampleID),"Subtype"]
+Subtype = meta_data[ match(vis_mat$Sample, meta_data$Sample_ID),"Subtype"]
 vis_mat = cbind(Subtype,vis_mat)
 vis_mat$Gene = factor(vis_mat$Gene, levels = c("AREG","EGFR"))
 
 p = ggplot(
   vis_mat,
-  aes( x = Gene, y = Value, fill = Subtype )
+  aes( x = Gene, y = Value, fill = rep(Subtype,2) )
 )
-p = p + geom_boxplot(notch = TRUE,outlier.colour = "red", outlier.shape = 1)
+p = p + geom_boxplot(notch = FALSE,outlier.colour = "red", outlier.shape = 1)
 p = p + scale_fill_manual(values = c("black","darkgreen","blue"))
 p = p + ylab("Expression") + theme(legend.position = "top")
 
