@@ -33,7 +33,7 @@ vis_mat$Gene = factor(vis_mat$Gene, levels = c("AREG","EGFR"))
 
 p = ggplot(
   vis_mat,
-  aes( x = Gene, y = Value, fill = rep(Subtype,2) )
+  aes( x = Gene, y = Value, fill = Subtype )
 )
 p = p + geom_boxplot(notch = FALSE,outlier.colour = "red", outlier.shape = 1)
 p = p + scale_fill_manual(values = c("black","darkgreen","blue"))

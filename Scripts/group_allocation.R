@@ -47,7 +47,10 @@ p_value_vec = class_data[match(colnames(expr_raw),class_data$Sample),"P_value"]
 
 #write.table( class_data, "~/Koop_Klinghammer/Results/Data.S103.tsv",sep ="\t", quote =F , row.names = FALSE)
 
-matcher = match(colnames(expr_raw),meta_info$SampleID,nomatch = 0)
+matcher = match(colnames(expr_raw),meta_info$Sample_ID_alt,nomatch = 0)
+
+meta_info$Sample_ID_alt[which(! (meta_info$Sample_ID_alt %in% colnames(expr_raw)))]
+
 meta_data = meta_info[matcher,]
 dim(meta_data)
 

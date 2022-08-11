@@ -4,11 +4,11 @@ library("grid")
 library("umap")
 
 expr_raw = read.table(
-  "~/Koop_Klinghammer/Data/",
+  "~/Koop_Klinghammer/Data/S103.tsv",
   sep ="\t",
   stringsAsFactors = F,
-  header = T
-  #row.names = F
+  header = T,
+  row.names = 1
 )
 colnames(expr_raw ) = str_replace_all(colnames(expr_raw), pattern = "^X", "")
 expr_raw[1:5,1:5]
@@ -21,6 +21,7 @@ meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t",
 rownames(meta_info) = meta_info$Sample_ID
 
 meta_data = meta_info[colnames(expr_raw),]
+dim(meta_data)
 #expr_raw = expr_raw[ ,meta_data$Included == "TRUE"  ]
 #meta_data
 #meta_data = meta_info[colnames(expr_raw),]
@@ -40,10 +41,6 @@ sad_genes[which(!(sad_genes %in% rownames(expr_raw)))]
 table(sad_genes %in% rownames(expr_raw) )
 
 expr = expr_raw#[ rownames(expr_raw) %in% sad_genes,]
-exclusion_samples = c("36","33","66","89","61","82","74","21","2","55","22","53","70","125","104","64","94")
-length(exclusion_samples)
-expr = expr[,!(colnames(expr) %in% exclusion_samples)]
-meta_data = meta_info[colnames(expr),]
 cor_mat = cor(expr);pcr = prcomp(t(cor_mat))
 
 #svg("~/Koop_Klinghammer/Results/23_10_2019/Heatmap_94.svg")

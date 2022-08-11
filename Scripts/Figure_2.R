@@ -21,15 +21,16 @@ meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t",
 rownames(meta_info) = meta_info$Sample_ID
 
 cor_mat = cor(expr_raw);pcr = prcomp(t(cor_mat))
-matcher = match(as.character(colnames(cor_mat)), as.character(meta_info$SampleID), nomatch = 0)
+matcher = match(as.character(colnames(cor_mat)), as.character(meta_info$Sample_ID), nomatch = 0)
 meta_data = meta_info[matcher,]
-rownames(meta_data) = meta_data$SampleID
+rownames(meta_data) = meta_data$Sample_ID
 
-selection = c("Subtype","Entzündung_ROC","Grading")
+selection = c("Subtype","Inflammatory_Infiltrate_ROC","Grading")
+selection %in% colnames(meta_data)
 meta_data[is.na(meta_data$Grading),"Grading"] = "Unknown"
 meta_data$Grading = factor(meta_data$Grading, levels = c("3","2","1","Unknown"))
-meta_data$Entzündung_ROC[is.na(meta_data$Entzündung_ROC)] = "Unknown"
-meta_data$Entzündung_ROC = as.factor(meta_data$Entzündung_ROC)
+meta_data$Inflammatory_Infiltrate_ROC[is.na(meta_data$Inflammatory_Infiltrate_ROC)] = "Unknown"
+meta_data$Inflammatory_Infiltrate_ROC = as.factor(meta_data$Inflammatory_Infiltrate_ROC)
 
 
 p = pheatmap::pheatmap(
@@ -37,7 +38,7 @@ p = pheatmap::pheatmap(
   annotation_col = meta_data[,selection],
   annotation_colors = aka3,
   show_rownames = F,
-  show_colnames = FALSE,
+  show_colnames = TRUE,
   treeheight_row = 0,
   legend = FALSE,
   fontsize_col = 7,
