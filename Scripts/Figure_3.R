@@ -39,7 +39,7 @@ p = p + geom_boxplot(notch = FALSE,outlier.colour = "red", outlier.shape = 1)
 p = p + scale_fill_manual(values = c("black","darkgreen","blue"))
 p = p + ylab("Expression") + theme(legend.position = "top")
 
-#svg(filename = "~/Downloads/AREG_EGFR_plot.svg", width = 10, height = 10)
+#svg(filename = "~/Koop_Klinghammer/Results/Figures/Figure_3.svg", width = 10, height = 10)
 print(p)
 dev.off()
 

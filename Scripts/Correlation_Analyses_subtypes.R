@@ -14,7 +14,7 @@ meta_data = meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv
 selectors[ ! (selectors %in% colnames(meta_data))]
 # CATEGORICAL
 
-parameters_categorical = c("Subtype","Histotyp","Grading_WHO","Tumor_cell_budding_2_tier","Cell_nest_size_2_tier","Mitotic_Count_2_tier","Nuclear_Size_2_tier","Stroma_Content_2_tier","Necrosis_2_tier","Inflammatory_Infiltrate_2_tier","Lymphangiosis","Perineural_Invasion","DCR","Best_Response","Localization_primary_tumor")
+parameters_categorical = c("Subtype","Histotyp","Grading","Tumor_cell_budding_ROC","Cell_nest_size_ROC","Mitotic_Count_ROC","Nuclear_Size_ROC","Stroma_Content_ROC","Necrosis_ROC","Inflammatory_Infiltrate_ROC","Lymphangiosis","Perineural_Invasion","Best_Response","Localization_primary_tumor")
 parameters_double = c("Keratinization","Tumor_cell_budding","Cell_nest_size","Mitotic_Count","Nuclear_Size","Stroma_Content","Necrosis","Inflammatory_Infiltrate","Overall_Survival_from_diagnosis","Overall_Survivall_from_Randomisation","Progression_free_Survivall_from_Randomisation","Progression_free_Survivall_from_Diagnosis","Tumorstadium_codiert")
 
 meta_data_vis = meta_data#[meta_data$Subtype %in% c("BA","CL"),]
