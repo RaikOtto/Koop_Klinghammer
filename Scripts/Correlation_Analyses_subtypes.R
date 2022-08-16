@@ -1,3 +1,4 @@
+library("tibble")
 library("ggplot2")
 library("stringr")
 library("grid")
@@ -6,7 +7,8 @@ library("dplyr")
 
 ### Prep
 
-selectors = c("Subtype","Histotyp","Grading_WHO","Keratinization","Tumor_cell_budding","Tumor_cell_budding_2_tier","Cell_nest_size","Cell_nest_size_2_tier","Mitotic_Count","Mitotic_Count_2_tier","Nuclear_Size","Nuclear_Size_2_tier","Stroma_Content","Stroma_Content_2_tier","Necrosis","Necrosis_2_tier","Inflammatory_Infiltrate","Inflammatory_Infiltrate_2_tier","Lymphangiosis","Perineural_Invasion","DCR","Best_Response","Localization_primary_tumor","Tumorstadium_codiert","Overall_Survival_from_diagnosis","Overall_Survivall_from_Randomisation","Progression_free_Survivall_from_Randomisation","Progression_free_Survivall_from_Diagnosis")
+selectors = c("Subtype","Grading","Keratinization","Tumor_cell_budding","Cell_nest_size","Mitotic_Count","Nuclear_Size","Necrosis","Inflammatory_Infiltrate","Lymphangiosis","Perineural_Invasion","Overall_Survival_from_diagnosis","Progression_free_Survival_from_Diagnosis")
+
 
 ## Figure 1
 
@@ -15,110 +17,48 @@ selectors[ ! (selectors %in% colnames(meta_data))]
 # CATEGORICAL
 
 parameters_categorical = c("Subtype","Histotyp","Grading","Tumor_cell_budding_ROC","Cell_nest_size_ROC","Mitotic_Count_ROC","Nuclear_Size_ROC","Stroma_Content_ROC","Necrosis_ROC","Inflammatory_Infiltrate_ROC","Lymphangiosis","Perineural_Invasion","Best_Response","Localization_primary_tumor")
-parameters_double = c("Keratinization","Tumor_cell_budding","Cell_nest_size","Mitotic_Count","Nuclear_Size","Stroma_Content","Necrosis","Inflammatory_Infiltrate","Overall_Survival_from_diagnosis","Overall_Survivall_from_Randomisation","Progression_free_Survivall_from_Randomisation","Progression_free_Survivall_from_Diagnosis","Tumorstadium_codiert")
+parameters_double = c("Keratinization","Tumor_cell_budding","Cell_nest_size","Mitotic_Count","Nuclear_Size","Necrosis","Inflammatory_Infiltrate","Overall_Survival_from_diagnosis","Overall_Survival_from_Randomisation","Progression_free_Survival_from_Randomisation","Progression_free_Survival_from_Diagnosis","Tumorstadium_codiert")
 
-meta_data_vis = meta_data#[meta_data$Subtype %in% c("BA","CL"),]
+meta_data_vis = meta_data
 dim(meta_data_vis) # 113 37
 
-result_mat_categorial <<- matrix(as.character(), ncol = 4)
-for( i in seq(1,length(parameters_categorical)-1) ){
-  for( j in seq(i+1,length(parameters_categorical)) ){
-    
-    parameter_1 = parameters_categorical[i]
-    parameter_2 = parameters_categorical[j]
-    
-    ana_table = as.data.frame(cbind(
-      (meta_data_vis[,parameter_1]),
-      (meta_data_vis[,parameter_2])
+###
+
+result_mat <<- matrix(as.character(), ncol = 3)
+
+for( selector_1 in selectors ){
+  for( selector_2 in selectors ){
+  
+    ana_table = as_tibble(cbind(
+      (meta_data[,selector_1]),
+      (meta_data[,selector_2])
     ))
+    ana_table = ana_table %>% filter( (!is.na(ana_table[,1]))  & ( ana_table[,1] != "Unknown" ) & ( ana_table[,1] != "" ))
+    ana_table = ana_table %>% filter( (!is.na(ana_table[,2]))  & ( ana_table[,2] != "Unknown" ) & ( ana_table[,2] != "" ))
+    ana_table = ana_table %>% as_tibble(ana_table)
     
-    ana_table = ana_table[ (!is.na(ana_table[,1]) &  ( ana_table[,1] != "")), ]
-    ana_table = ana_table[ (!is.na(ana_table[,2]) &  ( ana_table[,2] != "")), ]
-    test_statistic = table(ana_table)
-    
-    p_value =  chisq.test(test_statistic)$p.value
-    
-    if ( p_value < 0.05){
-      print( c(parameter_1, parameter_2, p_value) )
+    if ((selector_1 %in% parameters_double)      & (selector_2 %in% parameters_categorical)){
+      p_value = as.double(unlist(summary(aov(as.double(ana_table$V1)~as.factor(ana_table$V2))))[9])
     }
-    result_mat_categorial = rbind(result_mat_categorial, c("categorial",parameter_1, parameter_2, p_value))
+    if  ((selector_1 %in% parameters_categorical) & (selector_2 %in% parameters_double))      p_value = as.double(unlist(summary(aov(as.double(ana_table$V2)~as.factor(ana_table$V1))))[9])
+    if ((selector_1 %in% parameters_categorical) & (selector_2 %in% parameters_categorical))  p_value = chisq.test(ana_table$V1,ana_table$V2)$p.value
+    if  ((selector_1 %in% parameters_categorical) & (selector_2 %in% parameters_categorical))  p_value = chisq.test(ana_table$V1,ana_table$V2)$p.value
+  
+    if (selector_1 == selector_2) p_value = 0
+      
+    result_vec = matrix(c(selector_1, selector_2, p_value), ncol = 3)
+    result_mat = rbind(result_mat, result_vec)
   }
-}
-colnames(result_mat_categorial) = c("Type","Parameter_1","Parameter_2","P_value")
+} 
 
-###### NUMERIC
+write.table(result_mat, "~/Koop_Klinghammer/Results/Phenotype_correlations.tsv", sep ="\t",row.names = FALSE)
 
-result_mat_numeric <<- matrix(as.character(), ncol = 4)
-for( i in seq(1,length(parameters_double)-1) ){
-  for( j in seq(i+1,length(parameters_double)) ){
-    
-    parameter_1 = parameters_double[i]
-    parameter_2 = parameters_double[j]
-    
-    ana_table = as.data.frame(cbind(
-      (meta_data_vis[,parameter_1]),
-      (meta_data_vis[,parameter_2])
-    ))
-    
-    ana_table = ana_table[ (!is.na(ana_table[,1]) &  ( ana_table[,1] != "")), ]
-    ana_table = ana_table[ (!is.na(ana_table[,2]) &  ( ana_table[,2] != "")), ]
+result_mat = result_mat %>% as_tibble()
 
-    p_value =  cor.test(ana_table[,1],ana_table[,2])$p.value
-    correlation =  cor(ana_table[,1],ana_table[,2])
-    
-    if ( p_value < 0.05){
-      print( c(parameter_1, parameter_2, p_value) )
-    }
-    result_mat_numeric = rbind(result_mat_numeric, c("numeric",parameter_1, parameter_2, p_value))
-  }
-}
-colnames(result_mat_numeric) = c("Type","Parameter_1","Parameter_2","P_value")
-
-###### ANOVA
-
-result_mat_anova <<- matrix(as.character(), ncol = 4)
-for( i in seq(1,length(parameters_double)) ){
-  for( j in seq(1,length(parameters_double)) ){
-    
-    parameter_1 = parameters_categorical[i]
-    parameter_2 = parameters_double[j]
-    
-    ana_table = as.data.frame(cbind(
-      (meta_data_vis[,parameter_1]),
-      (meta_data_vis[,parameter_2])
-    ))
-    
-    ana_table = ana_table[ (!is.na(ana_table[,1]) &  ( ana_table[,1] != "")), ]
-    ana_table = ana_table[ (!is.na(ana_table[,2]) &  ( ana_table[,2] != "")), ]
-    
-    aov_analysis =  aov(ana_table[,2] ~ as.factor(ana_table[,1]))
-    p_value_results = TukeyHSD(aov_analysis)
-    
-    # extract th class label identities
-    res = p_value_results[names(p_value_results)]
-    labels = rownames(as.data.frame(res))
-    
-    length_res = length(unlist(p_value_results))
-    indices = length_res/4
-    p_values = as.double(unlist(p_value_results)[seq(length_res-indices +1,length_res)])
-    
-    labels_para_2 = paste(parameter_2, as.vector(labels), sep ="_")
-    anova_res_mat = matrix(c(rep("anova", length(p_values)),rep(parameter_1,length_res/4), labels_para_2, p_values), nrow = length(p_values))
-    result_mat_anova = rbind(result_mat_anova, anova_res_mat)
-  }
-}
-colnames(result_mat_anova) = c("Type","Parameter_1","Parameter_2","P_value")
-
-### output everything
-
-res_mat = rbind(result_mat_categorial,result_mat_numeric,result_mat_anova)
-#write.table(res_mat, "~/Downloads/Phenotype_correlations.tsv", sep ="\t",row.names = FALSE)
 ### correlation matrix
 
-parameters_survival = c("Overall_survial","Progression_free_survial","Progression_free_survial_diagnosis","Overall_survival_diagnosis")
-parameters = c(parameters_double,parameters_survival)
-parameters[! parameters %in% colnames(meta_data)]
-parameter_matrix = meta_data[,parameters]
+table(result_mat$V1)
+
 na_vec = apply(parameter_matrix, MARGIN = 1, FUN = function(vec){return(TRUE %in%is.na(vec))})
 parameter_matrix = parameter_matrix[! na_vec,]
 
@@ -176,7 +116,7 @@ for (i in 1:ncol(parameter_matrix)){
   }
 }
 
-#### correlation heatmap sampels
+#### correlation heatmap samples
 
 source("~/Koop_Klinghammer/Misc/Visualization_colors.R")
 parameters_survival = c("Overall_survial","Progression_free_survial","Progression_free_survial_diagnosis","Overall_survival_diagnosis")
@@ -204,6 +144,9 @@ p = pheatmap::pheatmap(
   fontsize_col = 7,
   clustering_method = "average"
 )
+
+
+####
 
 custom.config = umap.defaults
 custom.config$random_state = sample(1:1000,size = 1)
