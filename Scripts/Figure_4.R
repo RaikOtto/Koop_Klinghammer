@@ -30,7 +30,7 @@ meta_data = meta_data %>% filter(Survivalstatistik_neuestes_Sample == 1)
 table(meta_data$Survivalstatistik_neuestes_Sample)
 
 #meta_data = meta_data %>%  mutate( Subtype = case_when( Subtype %in% c("BA","MS") ~ "BA_MS", Subtype == "CL" ~ "CL"))
-meta_data = meta_data %>%  filter( Subtype == "CL")
+meta_data = meta_data %>%  filter( Subtype == "BA")
 
 ##########
 
@@ -38,7 +38,7 @@ survival_vectors =  c("Overall_Survival_from_diagnosis","Overall_Survival_from_R
 #survival_categories = c("Subtype","Histotyp","Grading","Keratinization","Tumor_cell_budding_ROC","Cell_nest_size_ROC","Mitotic_Count_ROC","Nuclear_Size_ROC","Necrosis_ROC","Inflammatory_Infiltrate_ROC","Lymphangiosis","Perineural_Invasion","Localization_primary_tumor")
 survival_categories = c("Histotyp","Grading","Keratinization","Tumor_cell_budding_ROC","Cell_nest_size_ROC","Mitotic_Count_ROC","Nuclear_Size_ROC","Necrosis_ROC","Inflammatory_Infiltrate_ROC","Lymphangiosis","Perineural_Invasion","Localization_primary_tumor")
 overall_results <<- matrix(character(), ncol = 4 )
-roc_types = c("Cutoff_Finder","Mean","Median")
+roc_types = c("Cutoff_Finder","Mean","Median","Study_arm")
 
 for (survival_type in survival_vectors){
   
@@ -46,9 +46,12 @@ for (survival_type in survival_vectors){
   
   for ( survival_category in survival_categories){
     
-    meta_data_vis = meta_data[,c(survival_type,survival_category,censor_type,str_replace(survival_category, "_ROC",""))]
+    meta_data_vis = meta_data[,c(survival_type,survival_category,censor_type,str_replace(survival_category, "_ROC",""),"Study_Arm" )]
     meta_data_vis = meta_data_vis %>% filter(meta_data_vis[,survival_type] != "")
+    meta_data_vis = meta_data_vis %>% filter(! is.na(meta_data_vis[,survival_type]))
     meta_data_vis = meta_data_vis %>% filter(meta_data_vis[,survival_category] != "")
+    meta_data_vis = meta_data_vis %>% filter(meta_data_vis[,survival_category] != "Unknown")
+    meta_data_vis = meta_data_vis %>% filter(! is.na(meta_data_vis[,survival_category]))
     
     survival_time = as.double(as.character(meta_data_vis[,survival_type]))
     censor_vector = as.integer(meta_data_vis[,censor_type])
@@ -65,7 +68,11 @@ for (survival_type in survival_vectors){
         if ( roc_type == "Mean") Threshold = mean(values_original) else Threshold = median(values_original)
         feature_type[ feature_type > Threshold] = "high"
         feature_type[ feature_type <= Threshold] = "low"
+      } else if (roc_type == "Study_arm"){
+        feature_type = as.factor(meta_data_vis$Study_Arm)
       }
+      
+      
       print(c(survival_category, survival_type, roc_type))
       fit_os = survival::survfit(
         survival::Surv( 
@@ -73,6 +80,7 @@ for (survival_type in survival_vectors){
           censor_vector
         ) ~ feature_type)
       p_value = as.double(survminer::surv_pvalue(fit_os, data = meta_data_vis)$pval)
+      #print(survminer::ggsurvplot(fit_os, data = meta_data_vis, risk.table = F, pval = T, censor.size = 10))
       results = c(survival_type, as.character(survival_category), roc_type, as.character(p_value))
       
       if ( is.na(p_value) ) next()
@@ -84,4 +92,4 @@ for (survival_type in survival_vectors){
 }
 colnames(overall_results) = c("Survival_time_type","Feature","ROC_type","P_value")
 
-openxlsx::write.xlsx(as.data.frame(overall_results), "~/Downloads/survival_cl.xlsx", asTable = TRUE, overwrite = TRUE)
+#openxlsx::write.xlsx(as.data.frame(overall_results), "~/Downloads/survival_ba.xlsx", asTable = TRUE, overwrite = TRUE)

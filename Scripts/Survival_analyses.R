@@ -3,7 +3,6 @@ library("dplyr")
 library("stringr")
 library("dplyr")
 
-
 expr_raw = read.table(
   "~/Koop_Klinghammer/Data/S103.tsv",
   sep ="\t",
@@ -19,7 +18,7 @@ dim(expr_raw)
 
 ## Figure 1
 
-meta_info = read.table("~/Koop_Klinghammer/Misc/Clinical_metadata_survival.tsv",sep ="\t", stringsAsFactors = F, header = T)
+meta_info = read.table("~/Koop_Klinghammer/Misc/Meta_information.tsv",sep ="\t", stringsAsFactors = F, header = T)
 rownames(meta_info) = meta_info$SampleID
 sum(meta_info$Survivalstatistik_neuestes_Sample)
 
@@ -29,7 +28,7 @@ sum(meta_info$Survivalstatistik_neuestes_Sample)
 # Overall_Survivall_from_Randomisation
 # Progression_free_Survivall_from_Diagnosis
 # Progression_free_Survivall_from_Randomisation
-survival_selector = "Overall_Survival_from_diagnosis"
+survival_selector = "Progression_free_Survivall_from_Randomisation"
 dim(meta_info)
 
 ##
