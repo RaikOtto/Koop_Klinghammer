@@ -113,6 +113,7 @@ schwellert = meta_data_vis_pfs[,selector]
 
 fit = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$PFS_ab_ED), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)
 survminer::surv_pvalue(fit, data = meta_data_vis_pfs)$pval
+
 fit = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$PFS_Monate_ab_Einschluss), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)
 survminer::surv_pvalue(fit, data = meta_data_vis_pfs)$pval
 fit = survival::survfit( survival::Surv( as.double(meta_data_vis_pfs$OS_ab_ED), censor_PFS ) ~ schwellert, data = meta_data_vis_pfs)

@@ -28,9 +28,12 @@ matcher = match(colnames(expr_raw),meta_info$Sample_ID, nomatch = 0)
 meta_data = meta_info[matcher,]
 meta_data = meta_data %>% filter(Survivalstatistik_neuestes_Sample == 1)
 table(meta_data$Survivalstatistik_neuestes_Sample)
+table(meta_data$Study_Arm)
 
 #meta_data = meta_data %>%  mutate( Subtype = case_when( Subtype %in% c("BA","MS") ~ "BA_MS", Subtype == "CL" ~ "CL"))
 #meta_data = meta_data %>%  filter( Subtype == "BA")
+meta_data = meta_data %>%  filter( Study_Arm == 2)
+table(meta_data$Subtype)
 
 ##########
 
@@ -92,4 +95,4 @@ for (survival_type in survival_vectors){
 }
 colnames(overall_results) = c("Survival_time_type","Feature","ROC_type","P_value")
 
-openxlsx::write.xlsx(as.data.frame(overall_results), "~/Downloads/survival.xlsx", asTable = TRUE, overwrite = TRUE)
+openxlsx::write.xlsx(as.data.frame(overall_results), "~/Downloads/survival_arm_2.xlsx", asTable = TRUE, overwrite = TRUE)
